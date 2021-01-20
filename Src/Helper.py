@@ -14,6 +14,7 @@ def normalized(dt):
 def standardized(dt):
     scale = preprocessing.StandardScaler().fit(dt)
     return scale.fit_transform(dt)
+
 def outlierRemoval_mask(dt):
     # This outlier detector makes use of the Isolated tree, from
     # sklearn library
@@ -58,10 +59,28 @@ def print_array(A,float_precision=3):
 # -------------------------------------------- #
 
 
+# TODO:
+"""
+  *Transform data to the off-set of the bounds (absolut) (the center of the bounds) - assumption
+     -Techinal question is below the same as above the bound (Question for company)
+         -In case not the same, we can use weighting 
+  *All distance says how bad -> lable the samples (range of badness)
+  *Drop parameters without bounds
+  *Perfomance evaluation (DEA - Data envelopment analysis) know sample is measured with x param each has value, the higher the worse
+
+  *Distance -> performance index for sample. DEA gives unique number for each sample. From x -> 1 score
+  *pyDEA - > library
+  *Be able to show the result is robust to the method, by showing simluar results from different methods
+  *Understading of the underlying method. 
+
+"""
+
 #The path to the data used
 data_path = "..\\Data"
-approved_file_name = data_path + "\\Approved_w_glu_3000rows_15_1_2021.csv"
-failed_file_name = data_path + "\\Failed_w_glu_15_1_2021.csv"
+approved_file_name = data_path + "\\Approved_w_glu.csv"
+failed_file_name = data_path + "\\Failed_w_glu.csv"
+approved_file_Transform_name = data_path + "\\Approved_w_glu_Transform.csv"
+failed_file_Transform_name = data_path + "\\Failed_w_glu_Transform.csv"
 
 
 #Reading in data and removing the onwanted columns
@@ -72,8 +91,8 @@ failed_data = pd.read_csv(failed_file_name,sep=r'\s*,\s*',engine='python').to_nu
 
 #For now we remove the 'Tid efter start [timer]' and the 'Tid in GLU' since these values are due to human handling 
 #and not a measure of the product
-approved_data = np.delete(approved_data,[col_mapping_dict['Tid efter start [timer]'],col_mapping_dict['Tid i min Glu']],1)
-failed_data = np.delete(failed_data,[col_mapping_dict['Tid efter start [timer]'],col_mapping_dict['Tid i min Glu']],1)
+approved_data = np.delete(approved_data,[col_mapping_dict['Tid i min Glu']],1)
+failed_data = np.delete(failed_data,[col_mapping_dict['Tid i min Glu']],1)
 
 # We here also avoid the class column since this is just binary good/bad 
 f_input,f_output = failed_data[:,:3],failed_data[:,4:]
