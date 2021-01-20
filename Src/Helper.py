@@ -59,7 +59,7 @@ def print_array(A,float_precision=3):
 
 
 #The path to the data used
-data_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\pyEnv\\Data"
+data_path = "..\\Data"
 approved_file_name = data_path + "\\Approved_w_glu_3000rows_15_1_2021.csv"
 failed_file_name = data_path + "\\Failed_w_glu_15_1_2021.csv"
 
