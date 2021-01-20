@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest as isoF
 from sklearn.cluster import KMeans as km
 from sklearn.decomposition import PCA
-
+from sklearn import preprocessing
 
 # ------ Function for data manupulation ------- #
 
@@ -11,9 +11,9 @@ def normalized(dt):
     return (dt - dt.min(0)) / dt.ptp(0)
     
 
-def standardize_data(dt):
-    pass
-
+def standardized(dt):
+    scale = preprocessing.StandardScaler().fit(dt)
+    return scale.fit_transform(dt)
 def outlierRemoval_mask(dt):
     # This outlier detector makes use of the Isolated tree, from
     # sklearn library
@@ -86,6 +86,7 @@ mask = outlierRemoval_mask(f_output)
 f_input,f_output = f_input[mask,:], f_output[mask,:]
 
 
+
 # Same for the approved data, alongside a reduction such that we got half and half 
 a_input,a_output = approved_data[:,:3],approved_data[:,4:]
 mask = outlierRemoval_mask(a_output)
@@ -99,7 +100,14 @@ f_output_pca = pca.fit_transform(normalized(f_output))
 
 
 pca_2 = PCA(n_components = 2)
+pca_2.fit(standardized(f_output))
+print("------------------------------------------")
+print("Standardized - PCA: ",end='');print_array(pca_2.explained_variance_ratio_)
+f_pca2_std = pca_2.fit_transform(standardized(f_output))
 pca_2.fit(normalized(f_output))
-f_pca2 = pca_2.fit_transform(normalized(f_output))
+print("------------------------------------------")
+print("Normalized - PCA: ",end='');print_array(pca_2.explained_variance_ratio_)
+print("------------------------------------------")
+f_pca2_norm = pca_2.fit_transform(normalized(f_output))
 
 

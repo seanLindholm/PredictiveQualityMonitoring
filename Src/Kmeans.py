@@ -44,9 +44,9 @@ def testAndPrintUpToNClusters(dt,n_clusters,seed):
         _ = FindMaxEuclidDistFromSet(L_dt,center_matrix)
         print()
 
-def pcaClosterPlot(clusters):
+def pcaClosterPlot(dt,clusters):
     if clusters > 0:
-        f_o,_,center_matrix = kMeansWithLabels(f_pca2,clusters,1337)
+        f_o,_,center_matrix = kMeansWithLabels(dt,clusters,1337)
         c_mask = np.zeros(f_o.shape[0])
         for i in range(clusters):
             mask = f_o[:,-1] == i
@@ -57,25 +57,33 @@ def pcaClosterPlot(clusters):
         plt.title(f"marked clusters with {clusters} number of clusters.")
     else:
        
-        plt.scatter(f_pca2[:,0],f_pca2[:,1],marker='.')
+        plt.scatter(dt[:,0],dt[:,1],marker='.')
         plt.title("data with 2 principal components")
 
 
 def main():
-    print("Use of Kmeans clustering after removal of outliers with NO reduction of dimention:\n")
-    testAndPrintUpToNClusters(normalized(f_output),f_output.shape[1],1337)
+    print("Use of Kmeans clustering after removal of outliers with NO reduction of dimention - Normalized:\n")
+    testAndPrintUpToNClusters(normalized(f_output),4,1337)#f_output.shape[1],1337)
+    print("Use of Kmeans clustering after removal of outliers with NO reduction of dimention - Standardized:\n")
+    testAndPrintUpToNClusters(standardized(f_output),4,1337)#f_output.shape[1],1337)
     print("\n\n\nUse of Kmeans clustering after removal of outliers with PCA reduction:\n")
-    testAndPrintUpToNClusters(f_output_pca,f_output_pca.shape[1],1337)
+    testAndPrintUpToNClusters(f_output_pca,4,1337)
   
     # Show plot of a 2D - pca clustering
-    plt.figure('No clusters')
-    pcaClosterPlot(0)
-    plt.figure('Two clusters')
-    pcaClosterPlot(2)
-    plt.figure('Three clusters')
-    pcaClosterPlot(3)
-    plt.figure('Four clusters')
-    pcaClosterPlot(4)
+    plt.figure('No clusters - norm')
+    pcaClosterPlot(f_pca2_norm,0)
+    plt.figure('Two clusters - norm')
+    pcaClosterPlot(f_pca2_norm,2)
+    plt.figure('Three clusters - norm')
+    pcaClosterPlot(f_pca2_norm,3)
+
+    # Show plot of a 2D - pca clustering
+    plt.figure('No clusters - std')
+    pcaClosterPlot(f_pca2_std,0)
+    plt.figure('Two clusters - std')
+    pcaClosterPlot(f_pca2_std,2)
+    plt.figure('Three clusters - std')
+    pcaClosterPlot(f_pca2_std,3)
 
     plt.show(block=False)
     input("Press Enter to close the figures...")
