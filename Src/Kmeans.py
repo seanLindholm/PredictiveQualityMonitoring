@@ -26,7 +26,7 @@ def kMeansWithLabels(dt,n_clusters,seed):
     f_out = np.append(dt,cluster_label,axis=1)
     # Print the number of points in the centers along the centers themself
     print(f"The cluster centroids for {n_clusters} clusters:")
-    print_matrix(KMs.cluster_centers_)
+    prettyprint.print_matrix(KMs.cluster_centers_)
     print("\nNumber of elements in each cluster:")
     print(Counter(KMs.labels_))
 
@@ -105,6 +105,7 @@ def printOutput(dh_list):
 def main():
     dh_l = [Data_handler(approved_file_name),Data_handler(failed_file_name),Data_handler(failed_file_name)]
     dh_l_transform = [Data_handler(approved_file_Transform_name),Data_handler(failed_file_Transform_name),Data_handler(failed_file_Transform_name)]
+
     
     for dh in dh_l:
         dh.removeColumns(['Class','Tid i min Glu'])
@@ -128,11 +129,15 @@ def main():
 
     for dh in dh_l:
         dh.outlierRemoval()
-        df = dh.dt
         dh.normalized()
         dh.splitData(3)
 
+    dh_l_eff = [Data_handler(eff_approved_name),Data_handler(eff_failed_name),Data_handler(eff_mixed_name)]
+    for elm in dh_l_eff:
+        dh_l.append(elm)
+    
     printOutput(dh_l)
+
 
 
     
