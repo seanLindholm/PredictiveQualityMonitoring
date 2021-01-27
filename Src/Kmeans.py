@@ -29,21 +29,24 @@ def kMeansWithLabels(dt,n_clusters,seed):
     prettyprint.print_matrix(KMs.cluster_centers_)
     print("\nNumber of elements in each cluster:")
     print(Counter(KMs.labels_))
-
     # devide the output into the labels using masks
     for i in range(n_clusters):
         mask = f_out[:,-1] == i
         L_dt.append(f_out[mask,:-1])
 
     # Return the matrix and the Matrix of matrixes where it has been divided 
-    return f_out,L_dt,KMs.cluster_centers_
+    return f_out,L_dt,KMs.cluster_centers_,cluster_label
 
-def testAndPrintUpToNClusters(dt,n_clusters,seed):
-    if n_clusters < 2: n_clusters = 2; 
-    for i in range(2,n_clusters+1):
-        _,L_dt,center_matrix = kMeansWithLabels(dt,i,seed)
+def testAndPrintUpToNClusters(dt,n_clusters,seed,start_cluster=2):
+    ret = []
+    if n_clusters < 2: n_clusters = 2
+    if start_cluster > n_clusters: n_clusters = start_cluster+1
+    for i in range(start_cluster,n_clusters+1):
+        _,L_dt,center_matrix,cl_label = kMeansWithLabels(dt,i,seed)
         _ = FindMaxEuclidDistFromSet(L_dt,center_matrix)
+        ret.append(cl_label)
         print()
+    return ret
 
 def pcaClosterPlot(dt,clusters):
     if clusters > 0:
@@ -62,85 +65,28 @@ def pcaClosterPlot(dt,clusters):
         plt.title("data with 2 principal components")
 
 
-def printOutput(dh_list):
+def printOutput(dh_list,start_cluster=2,include_pca=False):
+    ret = []
     for dh in dh_list:
         print()
         print(dh.__repr__())
         print()
         pca_red = dh.lowestComponancePCA(min_comp=2,explain_var = 0.95,output_only = True).fit_transform(dh.dt_out)
         print("Use of Kmeans clustering after removal of outliers with NO reduction of dimention - Normalized:\n")
-        testAndPrintUpToNClusters(dh.dt_out,3,0)#f_output.shape[1],1337)
+        ret_test = testAndPrintUpToNClusters(dh.dt_out,6,0,start_cluster)#f_output.shape[1],1337)
         #print("Use of Kmeans clusterng after removal of outliers with NO reduction of dimention - Standardized:\n")
         #testAndPrintUpToNClusters(standardized(f_output),4,1337)#f_output.shape[1],1337)
         print("\n\n\nUse of Kmeans clustering after removal of outliers with PCA reduction:\n")
-        testAndPrintUpToNClusters(pca_red,3,0)
+        ret_pca = testAndPrintUpToNClusters(pca_red,6,0,start_cluster)
+        ret.append(ret_test)
+        if(include_pca):
+            ret.append(ret_pca)
     
 
-    # print ("Use of kMeans clustering on Transformed dataset - normalized")
-    
-    # # Show plot of a 2D - pca clustering
-    # plt.figure('No clusters - norm')
-    # pcaClosterPlot(f_pca2_norm,0)
-    # plt.figure('Two clusters - norm')
-    # pcaClosterPlot(f_pca2_norm,2)
-    # plt.figure('Three clusters - norm')
-    # pcaClosterPlot(f_pca2_norm,3)
-
-
-    # # Show plot of a 2D - pca clustering
-    # plt.figure('No clusters - std')
-    # pcaClosterPlot(f_pca2_std,0)
-    # plt.figure('Two clusters - std')
-    # pcaClosterPlot(f_pca2_std,2)
-    # plt.figure('Three clusters - std')
-    # pcaClosterPlot(f_pca2_std,3)
-
-    plt.show(block=False)
-    input("Press Enter to close the figures...")
-    plt.close('all')
+    return ret
 
     
 
 
-def main():
-    dh_l = [Data_handler(approved_file_name),Data_handler(failed_file_name),Data_handler(failed_file_name)]
-    dh_l_transform = [Data_handler(approved_file_Transform_name),Data_handler(failed_file_Transform_name),Data_handler(failed_file_Transform_name)]
 
-    
-    for dh in dh_l:
-        dh.removeColumns(['Class','Tid i min Glu'])
-        
-    for dh in dh_l_transform:
-        dh.removeColumns(['Class'])
-
-    for elm in dh_l_transform:
-        dh_l.append(elm)
-    
-    Ran_app_sel = np.random.permutation(np.arange(dh_l[0].dt.shape[0]))[:dh_l[1].dt.shape[0]]
-    Ran_app_sel_trans = np.random.permutation(np.arange(dh_l[3].dt.shape[0]))[:dh_l[4].dt.shape[0]]
-    dt_mixed = np.append(dh_l[1].dt,dh_l[0].dt[Ran_app_sel,:],axis=0)
-    dt_mixed_trans = np.append(dh_l[4].dt,dh_l[3].dt[Ran_app_sel_trans,:],axis=0)
-
-    dh_l[2].dt = dt_mixed
-    dh_l[2].setPath("mixed tabel with approved and failed")
-    dh_l[5].dt = dt_mixed_trans
-    dh_l[5].setPath("mixed tabel with approved and failed - Transformed")
-
-
-    for dh in dh_l:
-        dh.outlierRemoval()
-        dh.normalized()
-        dh.splitData(3)
-
-    dh_l_eff = [Data_handler(eff_approved_name),Data_handler(eff_failed_name),Data_handler(eff_mixed_name)]
-    for elm in dh_l_eff:
-        dh_l.append(elm)
-    
-    printOutput(dh_l)
-
-
-
-    
-if __name__ == "__main__":
-    main()
    

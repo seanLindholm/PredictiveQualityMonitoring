@@ -54,24 +54,60 @@ eff_mixed_name = data_path + "\\eff_mixed.csv"
 
 
 class Data_handler:
-    def __init__(self,file_path_csv):
+    def __init__(self,file_path_csv = None, colMap = None, dt = None):
         """
             file_path: a direct or indirect path the to file with the whole name, including
-                       the .csv extension\n
+                       the .csv extension. When set overrides colMap and dt input\n
+            colMap: the Column mapping of the data_tabel\n
+            dt: the datatable. If both colMap and dt is set, file_path_csv is ignored\n
             self.dt: The datatabel to be manipulated with\n
             self.colMap: A mapping between column names and the indcies. Can be seen by printing the class
                          or by setting help=True in the function removeColumns\n
         """
-        self.__path = file_path_csv
-        dt_t = pd.read_csv(file_path_csv,sep=r'\s*,\s*',engine='python')
-        self.__normalized = False
-        self.colMap = np.array([c[1] for c in enumerate(dt_t.columns)])
-        self.dt = dt_t.to_numpy()
-        self.__restoreColumn = np.array([])
-        self.__restoreHeader = np.array([])
-        self.dt_out = self.dt
-        self.dt_in = self.dt
+        if (file_path_csv is not None):
+            self.__path = file_path_csv
+            dt_t = pd.read_csv(file_path_csv,sep=r'\s*,\s*',engine='python')
+            self.__normalized = False
+            self.colMap = np.array([c[1] for c in enumerate(dt_t.columns)])
+            self.dt = dt_t.to_numpy()
+            self.__restoreColumn = np.array([])
+            self.__restoreHeader = np.array([])
+            self.dt_out = self.dt
+            self.dt_in = self.dt
+
+        elif (colMap is not None and dt is not None ):
+            self.dt = dt
+            self.colMap = colMap
+            self.__restoreColumn = np.array([])
+            self.__restoreHeader = np.array([])
+            self.__normalized = False
+            self.__path = "Mixed table from two different data sources"
+            self.dt_out = self.dt
+            self.dt_in = self.dt
+        
+        else:
+            raise SyntaxError
+
     
+    @classmethod
+    def from2DH(cls,dh_1,dh_2,axis=0):
+        """
+            dh_1 is the first datahandler\n
+            dh_2 is the second, which is appened to dh_1\n
+            axis speicify if it should extend the rows or the columns. See Data_handler.append for more.
+        """
+        dh_1.append(dh_2,axis)
+        return cls(colMap=dh_1.colMap,dt=dh_1.dt)
+
+    
+    @classmethod
+    def dataAndHeader(cls,dt,header_l):
+        """
+            dt is the data\n
+            header_l is a list of column names as they appear in order eg ["Mouse","Size","Speed"]\n
+        """
+        return cls(colMap=header_l,dt=dt)
+
     def __str__(self):
         return f"Datatabel has {self.dt.shape[0]} samples with {self.dt.shape[1]} columns\nThe column names that can be used as keys for the column mapping are as follows:\n{ self.colMap }"
 
@@ -92,12 +128,18 @@ class Data_handler:
         else:
             self.__restoreHeader = np.append(self.__restoreHeader,array_colName)
 
+    
+    def shape(self):
+        return self.dt.shape
+    
     def deleteSavedData(self):
         """
             This function removes all saved columns and header. This function is not reversable
         """
         self.__restoreColumn = np.array([])
         self.__restoreHeader = np.array([])
+
+
 
     def restoreSavedData(self):
         """
@@ -131,14 +173,20 @@ class Data_handler:
             print("Available column name in the datatable:\n")
             for name in self.colMap:
                 print(f"{name}")
+                isinstance
         else:
-            indexis = [np.where(self.colMap == name)[0][0] for name in col_name_list]
+            if len(col_name_list) > 0:
+                indexis = [np.where(self.colMap == name)[0][0] for name in col_name_list]
+            else:
+                return
+
             if(save):
                 self.__saveToRestore(self.dt[:,indexis],self.colMap[indexis])
+            
             self.colMap = np.delete(self.colMap,indexis,0)
             self.dt = np.delete(self.dt,indexis,1)
     
-    def saveToCsv(self,file_name,path = "..\\Data\\"):
+    def saveToCsv(self,file_name,path = "..\\Data\\",floatPrecision = 3):
         with open(path+file_name+".csv", 'w+',encoding='utf-8') as file: 
             # Create header:
             for i in range(self.colMap.shape[0]):
@@ -152,7 +200,7 @@ class Data_handler:
             # Insert data:
             for row in self.dt:
                 for i in range(row.shape[0]):
-                    file.write(f"{row[i]}")
+                    file.write(f"{row[i]:.{floatPrecision}f}")
                     if (i < (row.shape[0]-1)):
                         file.write(",")
                     else:
@@ -281,15 +329,15 @@ class Data_handler:
 
 
     def outlierRemoval(self,contamination=0.1):
-        """ 
+        """
             This outlier detector makes use of the Isolated tree method, from
             the sklearn library.
         """
         iso = isoF(contamination=contamination)
-        yhat = iso.fit_predict(self.dt)
-        mask = yhat != -1
-        self.dt = self.dt[mask,:]
-        return 
+        for i in range(self.dt.shape[1]):
+            yhat = iso.fit_predict(self.dt[:,i].reshape(-1,1))
+            mask = yhat != -1
+            self.dt = self.dt[mask,:]
 
     def kMean(self,dt,num_clus,seed=0):
         """ 
