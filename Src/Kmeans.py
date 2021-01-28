@@ -45,6 +45,7 @@ def testAndPrintUpToNClusters(dt,n_clusters,seed,start_cluster=2):
         _,L_dt,center_matrix,cl_label = kMeansWithLabels(dt,i,seed)
         _ = FindMaxEuclidDistFromSet(L_dt,center_matrix)
         ret.append(cl_label)
+        ret.append(center_matrix)
         print()
     return ret
 

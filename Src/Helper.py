@@ -106,7 +106,7 @@ class Data_handler:
             dt is the data\n
             header_l is a list of column names as they appear in order eg ["Mouse","Size","Speed"]\n
         """
-        return cls(colMap=header_l,dt=dt)
+        return cls(colMap=np.array(header_l),dt=dt)
 
     def __str__(self):
         return f"Datatabel has {self.dt.shape[0]} samples with {self.dt.shape[1]} columns\nThe column names that can be used as keys for the column mapping are as follows:\n{ self.colMap }"
