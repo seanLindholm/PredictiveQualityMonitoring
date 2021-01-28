@@ -22,10 +22,10 @@ else:
     device = torch.device('cpu')
 
 class Net(nn.Module):
-    def __init__(self,shape):
+    def __init__(self,in_features):
         super(Net, self).__init__()
         # First fully connected layer
-        self.fc1 = nn.Linear(shape[1], 128)
+        self.fc1 = nn.Linear(in_features, 128)
         # Second fully connected layer that outputs our 10 labels
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 64)
@@ -36,7 +36,7 @@ class Net(nn.Module):
 
 
         #The optimizer
-        self.optimizer = optim.Adam(self.parameters(),lr=0.001)
+        self.optimizer = optim.Adam(self.parameters(),lr=0.0001)
         #Loss
         self.loss = nn.MSELoss()
 
@@ -85,16 +85,16 @@ class Net(nn.Module):
                 loss_e += out.data.cpu().numpy()
 
             
-            loss_e /= X_train.shape[0]
+            loss_e /= len(X_train)
             self.epoch_loss.append((loss_e))
 
             # -- Testing -- #
             acc = 0
             for X,y in zip(X_test,y_test):
                 pred = self.forward(Variable(X).to(device))
-                acc += 1-torch.abs(pred-Variable(y).to(device))
+                acc += 1-torch.mean(torch.abs(pred-Variable(y).to(device)))
             
-            acc /= X_test.shape[0] 
+            acc /= len(X_test) 
             
             self.epoch_acc.append(acc) 
 
@@ -130,9 +130,30 @@ def splitData(X,y,proc_train,seed = None):
 
 
 
+def createBatch(X_train,y_train,X_test,y_test,batch_size=32):
+    #Wraps around if dataset is not devicable with 32 (append the first diff to the end of each )
+    def data_batch(X,batch_size):
+        if (X.shape[0]%batch_size) != 0:
+            slice_ = batch_size - (X.shape[0] % batch_size)
+            X = torch.cat((X,X[:slice_,:]),dim=0)
+
+        X_batch = []
+        start_indx = 0
+        end_indx = batch_size
+        while (X.shape[0] >= end_indx):
+            X_batch.append(X[start_indx:end_indx,:])
+            start_indx += batch_size
+            end_indx += batch_size
+        
+        return X_batch
+
+    return data_batch(X_train,batch_size),data_batch(y_train,batch_size),data_batch(X_test,batch_size),data_batch(y_test,batch_size)
 
 
+    
+    
 def main():
+
     #This will be used as part of the cost-function
     dh_eff_cent = Data_handler(file_path_csv=eff_mixed_center_name)
     
@@ -143,14 +164,14 @@ def main():
     dh_data.splitData(3)
     X,y = torch.tensor(dh_data.dt_in),torch.tensor(dh_data.dt_out[:,1].reshape(-1,1))
     #Split data in train and test with 80 % train and 20 % test
-    X_train,y_train,X_test, y_test = splitData(X,y,0.8,seed=1337)
-   
+    X_train,y_train,X_test,y_test = splitData(X,y,0.8,seed=1337)
+    X_train,y_train,X_test,y_test = createBatch(X_train,y_train,X_test, y_test,batch_size=32)
     #Construct the network with the appropiate number of input data for each sample
-    my_nn = Net(X_train.shape).to(device)
-
+    my_nn = Net(in_features = 3).to(device)
     print(my_nn)
     print(my_nn.train(X_train,y_train,X_test,y_test,epochs=100))
     my_nn.plot()
+
 if __name__ == "__main__":
     main()
 
