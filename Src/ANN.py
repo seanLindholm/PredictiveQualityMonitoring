@@ -15,6 +15,11 @@ data_path = "..\\Data"
 eff_mixed_center_name = data_path + "\\dea_eff_centroid.csv"
 mixed_transform = data_path + "\\mixed_with_clusters.csv"
 
+# Global device check, if GPU is available use it!
+if torch.cuda.is_available():  
+    device = torch.device('cuda')
+else:  
+    device = torch.device('cpu')
 
 class Net(nn.Module):
     def __init__(self,shape):
@@ -73,12 +78,12 @@ class Net(nn.Module):
     
             for X,y in zip(X_train,y_train):
                 self.optimizer.zero_grad()
-                pred = self(Variable(X))
-                out = self.loss(pred,Variable(y))
+                pred = self(Variable(X).to(device))
+                out = self.loss(pred,Variable(y).to(device))
                 out.backward()
                 self.optimizer.step()
-                loss_e += out.data.numpy()
-      
+                loss_e += out.data.cpu().numpy()
+
             
             loss_e /= X_train.shape[0]
             self.epoch_loss.append((loss_e))
@@ -86,8 +91,8 @@ class Net(nn.Module):
             # -- Testing -- #
             acc = 0
             for X,y in zip(X_test,y_test):
-                pred = self.forward(Variable(X))
-                acc += 1-torch.abs(pred-Variable(y))
+                pred = self.forward(Variable(X).to(device))
+                acc += 1-torch.abs(pred-Variable(y).to(device))
             
             acc /= X_test.shape[0] 
             
@@ -127,8 +132,6 @@ def splitData(X,y,proc_train,seed = None):
 
 
 
-
-
 def main():
     #This will be used as part of the cost-function
     dh_eff_cent = Data_handler(file_path_csv=eff_mixed_center_name)
@@ -143,7 +146,7 @@ def main():
     X_train,y_train,X_test, y_test = splitData(X,y,0.8,seed=1337)
    
     #Construct the network with the appropiate number of input data for each sample
-    my_nn = Net(X_train.shape)
+    my_nn = Net(X_train.shape).to(device)
 
     print(my_nn)
     print(my_nn.train(X_train,y_train,X_test,y_test,epochs=100))
