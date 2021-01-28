@@ -1,7 +1,6 @@
 
 from Helper import *
 from collections import Counter
-import matplotlib.pyplot as plt
 
 def FindMaxEuclidDistFromSet(L_dt,center_matrix):
     ret = {}

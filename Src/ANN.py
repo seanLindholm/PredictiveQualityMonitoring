@@ -23,6 +23,10 @@ else:
 
 class Net(nn.Module):
     def __init__(self,in_features):
+        #this is used in the loss function to give a higher penelty if it also misses the correct class label
+        self.dh_classTarget = Data_handler(file_path_csv=eff_mixed_center_name)
+        self.bounds = np.array([ [i-j,i+j] for i,j in self.dh_classTarget.dt])
+
         super(Net, self).__init__()
         # First fully connected layer
         self.fc1 = nn.Linear(in_features, 128)
@@ -38,7 +42,7 @@ class Net(nn.Module):
         #The optimizer
         self.optimizer = optim.Adam(self.parameters(),lr=0.0001)
         #Loss
-        self.loss = nn.MSELoss()
+        self.loss = self.loss_function
 
     def forward(self,x):
         #Pass through first layer
@@ -61,10 +65,31 @@ class Net(nn.Module):
         output = torch.sigmoid(x)
         return output
 
-    def loss_function(self,pred,target):      
-        loss = torch.abs(pred - target)
-        return loss
+    def loss_function(self,pred,target):   
+        # First create the multiplyer of 2 for each none correct class labeling
+        # The class labeling is defined by std range for each class
+        # This is attached in self.dh_classTarget
+        indexs = target[:,2].reshape(1,-1).int()
+        if(indexs.size()[0] < 2):
+            target_class = self.bounds[indexs]
+        else:
+            index = indexs.squeeze()
+            target_class = torch.mean(torch.tensor(self.bounds[indexs]),dim=0)
+        p = torch.mean(pred.detach())
+        loss = torch.mean(torch.abs((pred - target[:,1].reshape(-1,1))**2))
+        penalty = 1 if target_class[0] <= p and p <= target_class[1] else 4
+        return loss*penalty
         
+    def calc_accuracy(self,pred,target):
+        indexs = target[:,2].cpu().reshape(1,-1).squeeze().int()
+        target_class = torch.mean(self.bounds[indexs],dim=0)
+        p = torch.mean(pred.detach().cpu().numpy())
+        lb = p >= target_class[:,0].reshape(-1,1)
+        ub = p <= target_class[:,1].reshape(-1,1)
+        good = [l_t and u_t for l_t,u_t in zip(lb,ub)]
+        return np.mean(good)
+
+
     def train(self,X_train,y_train,X_test,y_test,epochs=10):
         self.epoch_loss = []
         self.epoch_acc = []
@@ -92,7 +117,9 @@ class Net(nn.Module):
             acc = 0
             for X,y in zip(X_test,y_test):
                 pred = self.forward(Variable(X).to(device))
-                acc += 1-torch.mean(torch.abs(pred-Variable(y).to(device)))
+                # y[:,1] contains the dea - effcienty scores the rest is used in the loss function
+                #acc += self.calc_accuracy(pred,y)
+                acc += 1-torch.mean(torch.abs(pred-Variable(y[:,1].reshape(-1,1)).to(device)))
             
             acc /= len(X_test) 
             
@@ -116,16 +143,27 @@ class Net(nn.Module):
 
 
     def plot(self):
+        plt.figure('Loss and accuracy')
         plt.plot(self.epoch_loss)
         plt.plot(self.epoch_acc)
         plt.legend(["loss","acc"])
 
-        plt.show()
+        plt.figure('Loss')
+        plt.plot(self.epoch_loss)
+        plt.legend(["loss"])
+        
+        plt.figure('Accuratcy')
+        plt.plot(self.epoch_acc)
+        plt.legend(["acc"])
+        plt.show(block=False)
+        input("Press enter to close all windows")
+        plt.close('all')
 
 def splitData(X,y,proc_train,seed = None):
     np.random.seed(seed)
     Ran_indecies = np.random.permutation(np.arange(X.shape[0]))
     train_stop = int(X.shape[0]*proc_train)
+    np.random.seed(None)
     return X[Ran_indecies[:train_stop],:].float(),y[Ran_indecies[:train_stop],:].float(),X[Ran_indecies[train_stop:],:].float(),y[Ran_indecies[train_stop:],:].float()
 
 
@@ -162,15 +200,18 @@ def main():
     
     #Split the data in in_ out_ and select the dea_eff score as label
     dh_data.splitData(3)
-    X,y = torch.tensor(dh_data.dt_in),torch.tensor(dh_data.dt_out[:,1].reshape(-1,1))
+    X,y = torch.tensor(dh_data.dt_in),torch.tensor(dh_data.dt_out)
     #Split data in train and test with 80 % train and 20 % test
-    X_train,y_train,X_test,y_test = splitData(X,y,0.8,seed=1337)
-    X_train,y_train,X_test,y_test = createBatch(X_train,y_train,X_test, y_test,batch_size=32)
-    #Construct the network with the appropiate number of input data for each sample
+    X_train,y_train,X_test,y_test = splitData(X,y,0.8,seed=42)    
+    X_train,y_train,X_test,y_test = createBatch(X_train,y_train,X_test, y_test,batch_size=1)
+
     my_nn = Net(in_features = 3).to(device)
     print(my_nn)
+
+    #Construct the network with the appropiate number of input data for each sample
     print(my_nn.train(X_train,y_train,X_test,y_test,epochs=100))
     my_nn.plot()
+    
 
 if __name__ == "__main__":
     main()

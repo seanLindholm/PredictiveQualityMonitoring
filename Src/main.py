@@ -55,15 +55,44 @@ def buildDataForAnn():
     dh_unnormMixed.append(class_eff5,axis=1)
     dh_unnormMixed.removeColumns(['2/1 mM Glu/Lac [mM]','1 mM H2O2 [mM]', '40/25 mM glu/lac høj O2', 'Sensitivity [pA/µM]', 't on 10/5 mM glu/lac [s]', 'Lav O2 - Høj O2'])
     dh_unnormMixed.saveToCsv('mixed_with_clusters')
-    dea_eff_centroid = Data_handler.dataAndHeader(labels[1][1],["Centers - 5 cluster"])
+    
+
+    #Now find std for the different clusters of eff
+    mask_0 = np.where(dh_unnormMixed.dt[:,5] == 0)
+    mask_1 = np.where(dh_unnormMixed.dt[:,5] == 1)
+    mask_2 = np.where(dh_unnormMixed.dt[:,5] == 2)
+    mask_3 = np.where(dh_unnormMixed.dt[:,5] == 3)
+    mask_4 = np.where(dh_unnormMixed.dt[:,5] == 4)
+
+    std = np.array([[np.std(dh_unnormMixed.dt[mask_0,4])],
+                   [np.std(dh_unnormMixed.dt[mask_1,4])],
+                   [np.std(dh_unnormMixed.dt[mask_2,4])],
+                   [np.std(dh_unnormMixed.dt[mask_3,4])],
+                   [np.std(dh_unnormMixed.dt[mask_4,4])]])
+
+    dea_eff_centroid = Data_handler.dataAndHeader(np.append(labels[1][1],std,axis=1),["Centers - 5 cluster","std"])
     dea_eff_centroid.saveToCsv('dea_eff_centroid')
 
 
 
+def test():
+    a = np.array([[0,1,0,2,3]]).squeeze()
+    b = np.array([[0.01,8],[0.02,3],[0.03,1],[0.04,4],[0.05,7]])
+
+    x = b[a]
+    for a in x:
+        print(a)
+    c = np.mean(np.array([ [j-i,j+i] for i,j in x]),axis=0)
+    p = np.mean(np.array([[7],[4],[7],[2],[4]]))
+    print(p)
+    print(c)
+    print(c[0] <= p and p <= c[1])
+    pass
+
 def main():
     #buildMixedData()
-    buildDataForAnn()
-    
+    #buildDataForAnn()
+    test()
     
 
 
