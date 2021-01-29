@@ -130,7 +130,7 @@ def test():
     print(c[0] <= p and p <= c[1])
     pass
 
-def runANN(split,seed,num_runs=1,batch_size = 8,epochs = 200,eff_center=eff_mixed_center_name_5,data=mixed_transform_5,target_param=False):
+def runANN(split,seed,num_runs=1,batch_size = 8,epochs = 200,eff_center=eff_mixed_center_name_5,data=mixed_transform_5,class_prediction=False):
     #This will be used as part of the cost-function
     dh_eff_cent = Data_handler(file_path_csv=eff_center)
     
@@ -149,7 +149,7 @@ def runANN(split,seed,num_runs=1,batch_size = 8,epochs = 200,eff_center=eff_mixe
         #Split data in train and test with 80 % train and 20 % test
         X_train,y_train,X_test,y_test = splitData(X,y,proc_train=split,seed=seed)    
         X_train,y_train,X_test,y_test = createBatch(X_train,y_train,X_test, y_test,batch_size=batch_size)
-        nn = Net(in_features = 3,dh_classTarget=dh_eff_cent,target_param=target_param).to(device)
+        nn = Net(in_features = 3,dh_classTarget=dh_eff_cent,class_prediction=class_prediction).to(device)
 
 
         #Construct the network with the appropiate number of input data for each sample
@@ -161,8 +161,6 @@ def runANN(split,seed,num_runs=1,batch_size = 8,epochs = 200,eff_center=eff_mixe
         progressBar(i+1,num_runs)
     
     print(f"Done traning with {num_runs} runs. The average accuracy is scored as {acc/num_runs}.")
-    print("\nThe plot from the last iteration")
-    nn.plot()
     return best_nn
 
 def analyseClusterDistribution():
@@ -242,21 +240,31 @@ def testBestNN(nn,data=mixed_transform_5,target=eff_mixed_center_name_5,target_p
         eff_clus_target = test_data[i,5]
         eff_clus_pred = 1
         print(f"Predicted DEA score: {eff_pred[0,0]}\nTarget DEA score: {eff_target}\nCluster bound: {eff_clus_pred}\nTarget Cluster: {eff_clus_target}")
-    print("--------------------------------------------------------------------------------------------------------------------------------")
+    nn.plot()
+    print("-----------------------------------------------------------------------------------------------------------------")
 
 
 
 def main():
     #buildMixedData()
     #buildDataForAnn()
-    nn = runANN(split=0.8,seed=None,num_runs=1,batch_size=1,target_param=False,epochs=200)
-    #runANN(split=0.8,seed=None,num_runs=10,batch_size=16)
-    #runANN(split=0.8,seed=None,num_runs=10,batch_size=32)
+    nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=4,class_prediction=False,epochs=200)
+    testBestNN(nn,ran_num_sample = 5)
+
+    nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=16,class_prediction=False,epochs=200)
+    testBestNN(nn,ran_num_sample = 5)
     
-    #runANN(split=0.8,seed=None,num_runs=10,batch_size=1,eff_center=eff_mixed_center_name_4,data=mixed_transform_4)
-    #runANN(split=0.8,seed=None,num_runs=10,batch_size=16,eff_center=eff_mixed_center_name_4,data=mixed_transform_4)
-    #runANN(split=0.8,seed=None,num_runs=10,batch_size=32,eff_center=eff_mixed_center_name_4,data=mixed_transform_4)
-    testBestNN(nn,ran_num_sample = 50)
+    nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=32,class_prediction=False,epochs=200)
+    testBestNN(nn,ran_num_sample = 5)
+    
+    nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=4,eff_center=eff_mixed_center_name_4,data=mixed_transform_4,class_prediction=False,epochs=200)
+    testBestNN(nn,ran_num_sample = 5)
+    
+    nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=16,eff_center=eff_mixed_center_name_4,data=mixed_transform_4,class_prediction=False,epochs=200)
+    testBestNN(nn,ran_num_sample = 5)
+    
+    nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=32,eff_center=eff_mixed_center_name_4,data=mixed_transform_4,class_prediction=False,epochs=200)
+    testBestNN(nn,ran_num_sample = 5)
     
     #analyseClusterDistribution()
 
