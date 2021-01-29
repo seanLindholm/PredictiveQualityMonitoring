@@ -4,16 +4,12 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.utils.data as Data
-from Helper import Data_handler
+from Helper import Data_handler, progressBar
 from torch import nn, optim, utils
 import matplotlib.pyplot as plt
 
 
 
-#The path
-data_path = "..\\Data"
-eff_mixed_center_name = data_path + "\\dea_eff_centroid.csv"
-mixed_transform = data_path + "\\mixed_with_clusters.csv"
 
 # Global device check, if GPU is available use it!
 if torch.cuda.is_available():  
@@ -22,28 +18,33 @@ else:
     device = torch.device('cpu')
 
 class Net(nn.Module):
-    def __init__(self,in_features):
+    def __init__(self,in_features,dh_classTarget,target_param=False):
         #this is used in the loss function to give a higher penelty if it also misses the correct class label
-        self.dh_classTarget = Data_handler(file_path_csv=eff_mixed_center_name)
-        self.bounds = np.array([ [i-j,i+j] for i,j in self.dh_classTarget.dt])
+        self.dh_classTarget = dh_classTarget
+        self.bounds = np.array([ [i-j,i+j] for i,j in self.dh_classTarget.dt[:,:2]])
+        self.target_param = target_param
 
         super(Net, self).__init__()
         # First fully connected layer
         self.fc1 = nn.Linear(in_features, 128)
         # Second fully connected layer that outputs our 10 labels
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 64)
-        self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(32, 1)
+        self.fc2 = nn.Linear(128, 256)
+        self.fc3 = nn.Linear(256,128 )
 
+        self.fc4 = nn.Linear(128, 64)
+        self.fc5 = nn.Linear(64, 32)
+        if not self.target_param:
+            self.fc6 = nn.Linear(32, 1)
+        else:
+            self.fc6 = nn.Linear(32,6)
 
 
 
         #The optimizer
-        self.optimizer = optim.Adam(self.parameters(),lr=0.0001)
+        self.optimizer = optim.Adam(self.parameters(),lr=0.01)
         #Loss
         self.loss = self.loss_function
-
+        #self.loss = nn.MSELoss()
     def forward(self,x):
         #Pass through first layer
         x = self.fc1(x)
@@ -60,34 +61,54 @@ class Net(nn.Module):
         x = F.relu(x)
 
         x = self.fc5(x)
+        x = F.relu(x)
+
+        x = self.fc6(x)
 
         #Squeeze the output between 0-1 with sigmoid
         output = torch.sigmoid(x)
         return output
 
+    def calc_acc(self,pred,target):
+        if not self.target_param:
+            indexs = target[:,2].reshape(1,-1).cpu().int()
+            if(indexs.size()[1] < 2):
+                target_class = torch.tensor(self.bounds[indexs]).to(device)
+            else:
+                index = indexs.squeeze()
+                target_class = torch.tensor(self.bounds[indexs]).to(device).squeeze()
+            p = pred.detach()
+            if indexs.size()[1] > 2:
+                return torch.sum(torch.tensor([ (bound[0] <= x and x <= bound[1]) for x,bound in zip(p,target_class)])).to(device)
+            else:
+                return torch.sum(torch.tensor([ (target_class[0] <= p and p <= target_class[1])] )).to(device)
+        else:
+            return -1
+        
+           
+
     def loss_function(self,pred,target):   
         # First create the multiplyer of 2 for each none correct class labeling
         # The class labeling is defined by std range for each class
         # This is attached in self.dh_classTarget
-        indexs = target[:,2].reshape(1,-1).int()
-        if(indexs.size()[0] < 2):
-            target_class = self.bounds[indexs]
+        if not self.target_param:
+            indexs = target[:,2].reshape(1,-1).cpu().int()
+            if(indexs.size()[1] < 2):
+                target_class = torch.tensor(self.bounds[indexs]).to(device)
+            else:
+                index = indexs.squeeze()
+                target_class = torch.tensor(self.bounds[indexs]).to(device).squeeze()
+            p = pred.detach()
+            if indexs.size()[1] > 2:
+                p_sum = torch.sum(torch.tensor([ not (bound[0] <= x and x <= bound[1]) for x,bound in zip(p,target_class)])).to(device)
+            else:
+                p_sum = torch.sum(torch.tensor( not (target_class[0] <= p and p <= target_class[1] ))).to(device)
+            loss = torch.mean((pred - target[:,1].reshape(-1,1)).pow(2))
+            penalty = p_sum if p_sum > 0 else torch.tensor(1).to(device)
+            return loss*penalty
         else:
-            index = indexs.squeeze()
-            target_class = torch.mean(torch.tensor(self.bounds[indexs]),dim=0)
-        p = torch.mean(pred.detach())
-        loss = torch.mean(torch.abs((pred - target[:,1].reshape(-1,1))**2))
-        penalty = 1 if target_class[0] <= p and p <= target_class[1] else 4
-        return loss*penalty
+            return torch.mean((pred - target[:,4:]).pow(2))
         
-    def calc_accuracy(self,pred,target):
-        indexs = target[:,2].cpu().reshape(1,-1).squeeze().int()
-        target_class = torch.mean(self.bounds[indexs],dim=0)
-        p = torch.mean(pred.detach().cpu().numpy())
-        lb = p >= target_class[:,0].reshape(-1,1)
-        ub = p <= target_class[:,1].reshape(-1,1)
-        good = [l_t and u_t for l_t,u_t in zip(lb,ub)]
-        return np.mean(good)
 
 
     def train(self,X_train,y_train,X_test,y_test,epochs=10):
@@ -103,7 +124,10 @@ class Net(nn.Module):
     
             for X,y in zip(X_train,y_train):
                 self.optimizer.zero_grad()
+                print(y[:,1].reshape(-1,1))
                 pred = self(Variable(X).to(device))
+                print(pred)
+                input("Wait")
                 out = self.loss(pred,Variable(y).to(device))
                 out.backward()
                 self.optimizer.step()
@@ -111,6 +135,7 @@ class Net(nn.Module):
 
             
             loss_e /= len(X_train)
+            print(loss_e)
             self.epoch_loss.append((loss_e))
 
             # -- Testing -- #
@@ -119,24 +144,30 @@ class Net(nn.Module):
                 pred = self.forward(Variable(X).to(device))
                 # y[:,1] contains the dea - effcienty scores the rest is used in the loss function
                 #acc += self.calc_accuracy(pred,y)
-                acc += 1-torch.mean(torch.abs(pred-Variable(y[:,1].reshape(-1,1)).to(device)))
-            
-            acc /= len(X_test) 
-            
+                max_score = torch.tensor(1)
+                if not self.target_param:
+                    max_score = torch.tensor(y[:,2].shape[0]).float().to(device)
+                    acc += (self.calc_acc(pred,y).float()/max_score)
+                else:
+                    acc += torch.divide(torch.sum(1-(pred-Variable(y[:,4:]).to(device)).pow(2)),(y[:,4:].shape[0]*y[:,4:].shape[1]))
+
+            #len(X_test)/max_score
+            acc /= len(X_test)
+            print(acc)
             self.epoch_acc.append(acc) 
 
             # # -- Early stopping -- #
 
-            if abs(acc-old_acc) < threshold:
-                 if max_iter == 10:
-                     self.epochs = e+1
-                     break
-                 max_iter +=1
-            else:
-                 max_iter = 0
-                 old_acc = acc 
+            # if abs(acc-old_acc) < threshold:
+            #     if max_iter == 10:
+            #          e = epochs
+            #          break
+            #     max_iter +=1
+            # else:
+            #     max_iter = 1
+            #     old_acc = acc 
 
-            print(f"{e}/{epochs}",flush=True)
+            print(f"\r{e+1}/{epochs}",end='\r')
         # --- return acc after trainig --- #
 
         return acc
@@ -190,31 +221,31 @@ def createBatch(X_train,y_train,X_test,y_test,batch_size=32):
 
     
     
-def main():
+# def main():
 
-    #This will be used as part of the cost-function
-    dh_eff_cent = Data_handler(file_path_csv=eff_mixed_center_name)
+#     #This will be used as part of the cost-function
+#     dh_eff_cent = Data_handler(file_path_csv=eff_mixed_center_name)
     
-    #This is the data that needs to be trained on
-    dh_data = Data_handler(file_path_csv=mixed_transform)
+#     #This is the data that needs to be trained on
+#     dh_data = Data_handler(file_path_csv=mixed_transform)
     
-    #Split the data in in_ out_ and select the dea_eff score as label
-    dh_data.splitData(3)
-    X,y = torch.tensor(dh_data.dt_in),torch.tensor(dh_data.dt_out)
-    #Split data in train and test with 80 % train and 20 % test
-    X_train,y_train,X_test,y_test = splitData(X,y,0.8,seed=42)    
-    X_train,y_train,X_test,y_test = createBatch(X_train,y_train,X_test, y_test,batch_size=1)
+#     #Split the data in in_ out_ and select the dea_eff score as label
+#     dh_data.splitData(3)
+#     X,y = torch.tensor(dh_data.dt_in),torch.tensor(dh_data.dt_out)
+#     #Split data in train and test with 80 % train and 20 % test
+#     X_train,y_train,X_test,y_test = splitData(X,y,0.8,seed=42)    
+#     X_train,y_train,X_test,y_test = createBatch(X_train,y_train,X_test, y_test,batch_size=1)
 
-    my_nn = Net(in_features = 3).to(device)
-    print(my_nn)
+#     my_nn = Net(in_features = 3).to(device)
+#     print(my_nn)
 
-    #Construct the network with the appropiate number of input data for each sample
-    print(my_nn.train(X_train,y_train,X_test,y_test,epochs=100))
-    my_nn.plot()
+#     #Construct the network with the appropiate number of input data for each sample
+#     print(my_nn.train(X_train,y_train,X_test,y_test,epochs=100))
+#     my_nn.plot()
     
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
 
 
