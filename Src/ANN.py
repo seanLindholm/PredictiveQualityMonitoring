@@ -18,30 +18,31 @@ else:
     device = torch.device('cpu')
 
 class Net(nn.Module):
-    def __init__(self,in_features,dh_classTarget,class_prediction=False):
+    def __init__(self,in_features,dh_classTarget,class_prediction=False,early_stopping=True):
         #this is used in the loss function to give a higher penelty if it also misses the correct class label
         self.dh_classTarget = dh_classTarget
-        self.bounds = np.array([ [i-j,i+j] for i,j in self.dh_classTarget.dt[:,:2]])
+        self.bounds = np.array([ [i-j,i+j] for i,j in (self.dh_classTarget.dt[:,:2])])
         self.class_prediction = class_prediction
+        self.early_stopping = early_stopping
 
         super(Net, self).__init__()
         # First fully connected layer
-        self.fc1 = nn.Linear(in_features, 16)
+        self.fc1 = nn.Linear(in_features, 32)
         # Second fully connected layer that outputs our 10 labels
-        self.fc2 = nn.Linear(16, 16)
-        self.fc3 = nn.Linear(256,128 )
+        self.fc2 = nn.Linear(32, 128)
+        self.fc3 = nn.Linear(128,64 )
 
-        self.fc4 = nn.Linear(128, 64)
-        self.fc5 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(64, 32)
+        self.fc5 = nn.Linear(32, 16)
         if not self.class_prediction:
             self.fc6 = nn.Linear(16, 1)
         else:
-            self.fc6 = nn.Linear(16,5)
+            self.fc6 = nn.Linear(16 ,5)
 
 
 
         #The optimizer
-        self.optimizer = optim.Adam(self.parameters(),lr=0.01)
+        self.optimizer = optim.Adam(self.parameters(),lr=10e-5)
         #Loss
         #self.loss = self.loss_function
         if self.class_prediction:
@@ -58,21 +59,21 @@ class Net(nn.Module):
         x = self.fc2(x)
         x = F.relu(x)
 
-        # x = self.fc3(x)
-        # x = F.relu(x)
+        x = self.fc3(x)
+        x = F.relu(x)
 
-        # x = self.fc4(x)
-        # x = F.relu(x)
+        x = self.fc4(x)
+        x = F.relu(x)
 
-        # x = self.fc5(x)
-        # x = F.relu(x)
+        x = self.fc5(x)
+        x = F.relu(x)
 
         x = self.fc6(x)
         #Squeeze the output between 0-1 with sigmoid
         if self.class_prediction:
             output = F.softmax(x)
         else:
-            output = F.linear(x,torch.FloatTensor([[1]]).to(device))
+            output = F.relu(x)
         return output
 
     def calc_acc(self,pred,target):
@@ -134,17 +135,16 @@ class Net(nn.Module):
                 if self.class_prediction:
                     out = self.loss(pred,Variable(y[:,2].long()).to(device))
                 else:
-                    out = self.loss(pred,Variable(y[:,1]).reshape(-1,1).to(device))*10
+                    out = self.loss(pred,Variable(y[:,1]).reshape(-1,1).to(device))
 
                 out.backward()
-
                 self.optimizer.step()
                 loss_e += out.data.cpu().numpy()
 
             
             loss_e /= len(X_train)
             self.epoch_loss.append((loss_e))
-
+           
             # -- Testing -- #
             acc = 0
             for X,y in zip(X_test,y_test):
@@ -153,26 +153,29 @@ class Net(nn.Module):
                 #acc += self.calc_accuracy(pred,y)
                 max_score = torch.tensor(1)
                 if not self.class_prediction:
+                    target_train = y
                     max_score = torch.tensor(y.shape[0]).float().to(device)
-                    acc += (self.calc_acc(pred,y).float()/max_score)
+                    acc += (self.calc_acc(pred,target_train).float()/max_score)
                 else:
+                    target_train = y[:,2].to(device)
                     pred = torch.argmax(pred,dim=1).to(device)
-                    acc += torch.divide(torch.sum(torch.eq(pred.to(device),y[:,2].to(device)).to(device)).float(),y.shape[0])
+                    acc += torch.divide(torch.sum(torch.eq(pred.to(device),target_train).to(device)).float(),y.shape[0])
 
-            #len(X_test)/max_score
+            len(X_test)/max_score
             acc /= len(X_test)
+
             self.epoch_acc.append(acc) 
 
             # # -- Early stopping -- #
-
-            if abs(acc-old_acc) < threshold:
-                if max_iter == 10:
-                     e = epochs
-                     break
-                max_iter +=1
-            else:
-                max_iter = 1
-                old_acc = acc 
+            if self.early_stopping:
+                if abs(acc-old_acc) < threshold:
+                    if max_iter == 10:
+                        e = epochs
+                        break
+                    max_iter +=1
+                else:
+                    max_iter = 1
+                    old_acc = acc 
 
             print(f"\r{e+1}/{epochs}",end='\r')
         # --- return acc after trainig --- #
@@ -184,18 +187,17 @@ class Net(nn.Module):
         plt.figure('Loss and accuracy')
         plt.plot(self.epoch_loss)
         plt.plot(self.epoch_acc)
-        plt.ylim(0,1)
+      
         plt.legend(["loss","acc"])
 
         plt.figure('Loss')
         plt.plot(self.epoch_loss)
-        plt.ylim(0,5)
         plt.legend(["loss"])
         
         plt.figure('Accuracy')
         plt.plot(self.epoch_acc)
         plt.legend(["acc"])
-        plt.ylim(0,1)
+     
         plt.show(block=False)
         input("Press enter to close all windows")
         plt.close('all')
@@ -231,31 +233,6 @@ def createBatch(X_train,y_train,X_test,y_test,batch_size=32):
 
     
     
-# def main():
-
-#     #This will be used as part of the cost-function
-#     dh_eff_cent = Data_handler(file_path_csv=eff_mixed_center_name)
-    
-#     #This is the data that needs to be trained on
-#     dh_data = Data_handler(file_path_csv=mixed_transform)
-    
-#     #Split the data in in_ out_ and select the dea_eff score as label
-#     dh_data.splitData(3)
-#     X,y = torch.tensor(dh_data.dt_in),torch.tensor(dh_data.dt_out)
-#     #Split data in train and test with 80 % train and 20 % test
-#     X_train,y_train,X_test,y_test = splitData(X,y,0.8,seed=42)    
-#     X_train,y_train,X_test,y_test = createBatch(X_train,y_train,X_test, y_test,batch_size=1)
-
-#     my_nn = Net(in_features = 3).to(device)
-#     print(my_nn)
-
-#     #Construct the network with the appropiate number of input data for each sample
-#     print(my_nn.train(X_train,y_train,X_test,y_test,epochs=100))
-#     my_nn.plot()
-    
-
-# if __name__ == "__main__":
-#     main()
 
 
 

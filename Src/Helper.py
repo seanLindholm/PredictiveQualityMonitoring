@@ -241,7 +241,10 @@ class Data_handler:
 
         pass
         
-
+    
+    def mult(self,x):
+        self.dt *= x
+        
     def normalized(self):
         """
             Normalizes the datatable in the range (0-1) 
