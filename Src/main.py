@@ -182,18 +182,33 @@ def buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withCl
 
 
 def test():
-    a = np.array([[0,1,0,2,3]]).squeeze()
-    b = np.array([[0.01,8],[0.02,3],[0.03,1],[0.04,4],[0.05,7]])
+    dh = Data_handler("..\\Data\\dummy.csv")
+    dh2 = Data_handler(mixed_transform_5)
+    
+    print(np.mean(dh2.dt[:,4]))
+    print()
+    dh2.normalized()
+    dh2.splitData(3)
+    dh.splitData(3)
+    print(np.std(dh.dt_in))
+    print(np.var(dh.dt_in))
+    print()
+    print(np.std(dh2.dt_in))
+    print(np.var(dh2.dt_in))
+    dh_2 = Data_handler("..\\Data\\Mixed_transform_withClass_normalized.csv")
+    dh_2.removeColumns(['2/1 mM Glu/Lac [mM]','1 mM H2O2 [mM]','40/25 mM glu/lac høj O2','Sensitivity [pA/µM]','t on 10/5 mM glu/lac [s]','Lav O2 - Høj O2','Class'])
+    dh_2.deleteSavedData()
+    dh_3 = Data_handler("..\\Data\\mixed_with_clusters5_transformed.csv")
+    dh_3.removeColumns(['time_betw_scan_hours','CA','YM'])
+    dh_2.append(dh_3,axis=1)
+    dh_2.saveToCsv('test_data')
+    
 
-    x = b[a]
-    for a in x:
-        print(a)
-    c = np.mean(np.array([ [j-i,j+i] for i,j in x]),axis=0)
-    p = np.mean(np.array([[7],[4],[7],[2],[4]]))
-    print(p)
-    print(c)
-    print(c[0] <= p and p <= c[1])
-    pass
+
+    
+
+
+
 
 def runANN(split,seed,num_runs=1,batch_size = 8,epochs = 200,eff_center=eff_mixed_center_name_5,data=mixed_transform_5,class_prediction=False,early_stopping=True,in_features=3,split_indx = 3):
     #This will be used as part of the cost-function
@@ -352,17 +367,17 @@ def main():
     #buildMixedData(approved_data = approved_file_Transform_name, failed_data = failed_file_Transform_name,transformed=True)
     #buildMixedData(approved_data = approved_file_name, failed_data = failed_file_name,transformed=False)
 
-   # buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_transform_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_transform_withClass_unNorm.csv",transformed=True)
+    #buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_transform_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_transform_withClass_unNorm.csv",transformed=True)
     #buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_withClass_unNorm.csv",transformed=False)
 
-    # nn = runANN(split=1,seed=None,num_runs=1,batch_size=2,class_prediction=False,epochs=2000,early_stopping=False,eff_center=eff_mixed_center_name_4,data="..\\Data\\dummy.csv")
+    # nn = runANN(split=1,seed=None,num_runs=1,batch_size=2,class_prediction=False,epochs=500,early_stopping=False,eff_center=eff_mixed_center_name_4,data="..\\Data\\dummy.csv")
     # testBestNN(nn,ran_num_sample = 6,data="..\\Data\\dummy.csv",eff_target_indx=3,eff_clus_target_indx=1)
 
-    nn = runANN(split=0.8,seed=None,num_runs=1,batch_size=32,class_prediction=False,epochs=1000,early_stopping=False)
-    testBestNN(nn,ran_num_sample = 15)
+    nn = runANN(split=0.8,seed=None,num_runs=1,batch_size=32,data="..\\Data\\test_data.csv",class_prediction=False,epochs=5000,early_stopping=False)
+    testBestNN(nn,data = "..\\Data\\test_data.csv",ran_num_sample = 15)
     
-    # nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=32,class_prediction=False,epochs=200)
-    # testBestNN(nn,ran_num_sample = 5)
+    # nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=128,class_prediction=False,epochs=500,early_stopping=False)
+    # testBestNN(nn,ran_num_sample = 15)
     
     # nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=4,eff_center=eff_mixed_center_name_4,data=mixed_transform_4,class_prediction=False,epochs=200)
     # testBestNN(nn,ran_num_sample = 5)
@@ -376,7 +391,7 @@ def main():
    # analyseClusterDistribution(Mixed5 = mixed_transform_5, Mixed4 = mixed_transform_4, eff5 = eff_mixed_center_name_5, eff4 = eff_mixed_center_name_4, transformed=True)
     #analyseClusterDistribution(Mixed5 = mixed_5, Mixed4 = mixed_4, eff5=cluster_center_5,eff4=cluster_center_4, transformed=False)
 
-    #test()
+    test()
     
 
 
