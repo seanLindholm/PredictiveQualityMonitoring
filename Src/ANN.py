@@ -169,7 +169,7 @@ class Net(nn.Module):
             # # -- Early stopping -- #
             if self.early_stopping:
                 if abs(acc-old_acc) < threshold:
-                    if max_iter == 10:
+                    if max_iter == 150:
                         e = epochs
                         break
                     max_iter +=1

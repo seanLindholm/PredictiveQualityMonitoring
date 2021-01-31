@@ -210,7 +210,7 @@ def test():
 
 
 
-def runANN(split,seed,num_runs=1,batch_size = 8,epochs = 200,eff_center=eff_mixed_center_name_5,data=mixed_transform_5,class_prediction=False,early_stopping=True,in_features=3,split_indx = 3):
+def runANN(split,seed,num_runs=1,batch_size = 8,epochs = 200,eff_center=eff_mixed_center_name_5,data="..\\Data\\ANN_data_5cluster.csv",class_prediction=False,early_stopping=True,in_features=3,split_indx = 3):
     #This will be used as part of the cost-function
     dh_eff_cent = Data_handler(file_path_csv=eff_center)
     
@@ -343,7 +343,7 @@ def analyseClusterDistribution(Mixed5 = mixed_transform_5, Mixed4 = mixed_transf
 
 
 
-def testBestNN(nn,data=mixed_transform_5,target=eff_mixed_center_name_5,target_param=False,ran_num_sample=10,split_indx = 3,eff_target_indx = 4,eff_clus_target_indx = 5):
+def testBestNN(nn,data="..\\Data\\ANN_data_5cluster.csv",target=eff_mixed_center_name_5,target_param=False,ran_num_sample=10,split_indx = 3,eff_target_indx = 4,eff_clus_target_indx = 5):
     dh = Data_handler(file_path_csv=data)
     dh_t = Data_handler(file_path_csv=target)
 
@@ -364,34 +364,33 @@ def testBestNN(nn,data=mixed_transform_5,target=eff_mixed_center_name_5,target_p
 
 
 def main():
-    #buildMixedData(approved_data = approved_file_Transform_name, failed_data = failed_file_Transform_name,transformed=True)
-    #buildMixedData(approved_data = approved_file_name, failed_data = failed_file_name,transformed=False)
+    buildMixedData(approved_data = approved_file_Transform_name, failed_data = failed_file_Transform_name,transformed=True)
+    buildMixedData(approved_data = approved_file_name, failed_data = failed_file_name,transformed=False)
 
-    #buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_transform_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_transform_withClass_unNorm.csv",transformed=True)
-    #buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_withClass_unNorm.csv",transformed=False)
+    buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_transform_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_transform_withClass_unNorm.csv",transformed=True)
+    buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_withClass_unNorm.csv",transformed=False)
 
-    # nn = runANN(split=1,seed=None,num_runs=1,batch_size=2,class_prediction=False,epochs=500,early_stopping=False,eff_center=eff_mixed_center_name_4,data="..\\Data\\dummy.csv")
+    # print("-------------------- DUMMY TEST ------------------------------")
+    # # Need to change Ann.py to run this. In training set y[:,1] to y, and outcomment accuracy calculation
+    # nn = runANN(split=1,seed=None,num_runs=5,batch_size=2,class_prediction=False,epochs=500,early_stopping=False,eff_center=eff_mixed_center_name_4,data="..\\Data\\dummy.csv")
     # testBestNN(nn,ran_num_sample = 6,data="..\\Data\\dummy.csv",eff_target_indx=3,eff_clus_target_indx=1)
+    # print("-------------------DUMMY TEST END-----------------------------")
 
-    nn = runANN(split=0.8,seed=None,num_runs=1,batch_size=32,data="..\\Data\\test_data.csv",class_prediction=False,epochs=5000,early_stopping=False)
-    testBestNN(nn,data = "..\\Data\\test_data.csv",ran_num_sample = 15)
     
-    # nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=128,class_prediction=False,epochs=500,early_stopping=False)
-    # testBestNN(nn,ran_num_sample = 15)
-    
-    # nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=4,eff_center=eff_mixed_center_name_4,data=mixed_transform_4,class_prediction=False,epochs=200)
-    # testBestNN(nn,ran_num_sample = 5)
-    
-    # nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=16,eff_center=eff_mixed_center_name_4,data=mixed_transform_4,class_prediction=False,epochs=200)
-    # testBestNN(nn,ran_num_sample = 5)
-    
-    # nn = runANN(split=0.8,seed=None,num_runs=10,batch_size=32,eff_center=eff_mixed_center_name_4,data=mixed_transform_4,class_prediction=False,epochs=200)
-    # testBestNN(nn,ran_num_sample = 5)
-    
-   # analyseClusterDistribution(Mixed5 = mixed_transform_5, Mixed4 = mixed_transform_4, eff5 = eff_mixed_center_name_5, eff4 = eff_mixed_center_name_4, transformed=True)
-    #analyseClusterDistribution(Mixed5 = mixed_5, Mixed4 = mixed_4, eff5=cluster_center_5,eff4=cluster_center_4, transformed=False)
+    nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=32,class_prediction=False,epochs=500,early_stopping=False)
+    testBestNN(nn,ran_num_sample = 15)
 
-    test()
+    nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=64,class_prediction=False,epochs=500,early_stopping=False)
+    testBestNN(nn,ran_num_sample = 15)
+    
+    nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=128,class_prediction=False,epochs=500,early_stopping=False)
+    testBestNN(nn,ran_num_sample = 15)
+    
+    
+    analyseClusterDistribution(Mixed5 = mixed_transform_5, Mixed4 = mixed_transform_4, eff5 = eff_mixed_center_name_5, eff4 = eff_mixed_center_name_4, transformed=True)
+    analyseClusterDistribution(Mixed5 = mixed_5, Mixed4 = mixed_4, eff5=cluster_center_5,eff4=cluster_center_4, transformed=False)
+
+    # test()
     
 
 
