@@ -282,9 +282,9 @@ class Data_handler:
             If axis = 0, then it extends the rows, the column name and position of the names is expected to be the same. \n
             If axis = 1, the column will be extended accordingly \n
         """
-        if self.__restoreColumn.size != 0 or self.__restoreHeader != 0:
-            print("There is some saved data which can be restored. Either restore this or deletet the buffers in order to use this function")
-            return
+        # if self.__restoreColumn.size != 0 or self.__restoreHeader != 0:
+        #     print("There is some saved data which can be restored. Either restore this or deletet the buffers in order to use this function")
+        #     return
 
         if (axis==0):
             if (data_handler.dt.shape[1] != self.dt.shape[1]):

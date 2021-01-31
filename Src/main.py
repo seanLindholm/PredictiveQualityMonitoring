@@ -70,17 +70,23 @@ def buildMixedData(approved_data = approved_file_Transform_name, failed_data = f
 
     
 def buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_transform_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_transform_withClass_unNorm.csv",transformed=True):
+    
+    #Always build ANN_data_5cluster.csv like this:
+
+    
     dh_mixed = Data_handler(file_path_csv=mixed_data_withClass_norm)
     dh_mixed.removeColumns(['Class'])
 
     dh_mixed.splitData(3)
     dh_mixed_eff = Data_handler(file_path_csv=eff_mixed_name)
     labels = printOutput([dh_mixed,dh_mixed_eff],start_cluster=4)
-
     class_eff5 = Data_handler.dataAndHeader(labels[1][2],["cluster efficency - 5 clusters"])
     class_norm5 = Data_handler.dataAndHeader(labels[0][2],["cluster normalized - 5 clusters"])
 
     dh_mixed.restoreSavedData()
+   
+    dh_mixed.removeColumns(['2/1 mM Glu/Lac [mM]','1 mM H2O2 [mM]','40/25 mM glu/lac høj O2','Sensitivity [pA/µM]','t on 10/5 mM glu/lac [s]','Lav O2 - Høj O2'])
+
 
     dh_normMixed = Data_handler(file_path_csv=mixed_data_noClass_norm)
     dh_unnormMixed = Data_handler(file_path_csv=mixed_data_withClass)
@@ -89,6 +95,13 @@ def buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withCl
         dh_unnormMixed.append(dh_mixed_eff,axis=1)
         dh_unnormMixed.append(class_eff5,axis=1)
         dh_unnormMixed.append(class_norm5,axis=1)
+        dh_mixed.append(dh_mixed_eff,axis=1)
+        dh_mixed.append(class_eff5,axis=1)
+        dh_mixed.append(class_norm5,axis=1)
+        dh_mixed.restoreSavedData()
+        dh_mixed.saveToCsv("ANN_data_5cluster")
+
+
     else:
         dh_paramTransform_norm = Data_handler.dataAndHeader(dh_normMixed.dt[:,3:],['2/1 mM Glu/Lac [mM]','1 mM H2O2 [mM]','40/25 mM glu/lac høj O2','40/25 mM glu/lac lav O2','Sensitivity [pA/µM],t on 10/5 mM glu/lac [s]','Lav O2 - Høj O2,50 mM Mannose','35 mM Glycolsyre,2 mM PAM'])
         dh_unnormMixed.append(class_norm5,axis=1)
@@ -364,11 +377,11 @@ def testBestNN(nn,data="..\\Data\\ANN_data_5cluster.csv",target=eff_mixed_center
 
 
 def main():
-    buildMixedData(approved_data = approved_file_Transform_name, failed_data = failed_file_Transform_name,transformed=True)
-    buildMixedData(approved_data = approved_file_name, failed_data = failed_file_name,transformed=False)
+    #buildMixedData(approved_data = approved_file_Transform_name, failed_data = failed_file_Transform_name,transformed=True)
+    #buildMixedData(approved_data = approved_file_name, failed_data = failed_file_name,transformed=False)
 
-    buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_transform_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_transform_withClass_unNorm.csv",transformed=True)
-    buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_withClass_unNorm.csv",transformed=False)
+    #buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_transform_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_transform_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_transform_withClass_unNorm.csv",transformed=True)
+    #buildDataForAnn(mixed_data_withClass_norm ="..\\Data\\Mixed_withClass_normalized.csv",mixed_data_noClass_norm = "..\\Data\\Mixed_noClass_normalized.csv",mixed_data_withClass = "..\\Data\\Mixed_withClass_unNorm.csv",transformed=False)
 
     # print("-------------------- DUMMY TEST ------------------------------")
     # # Need to change Ann.py to run this. In training set y[:,1] to y, and outcomment accuracy calculation
