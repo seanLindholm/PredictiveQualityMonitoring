@@ -67,6 +67,7 @@ class Data_handler:
         if (file_path_csv is not None):
             self.__path = file_path_csv
             dt_t = pd.read_csv(file_path_csv,sep=r'\s*,\s*',engine='python')
+            print(dt_t)
             self.__normalized = False
             self.colMap = np.array([c[1] for c in enumerate(dt_t.columns)])
             self.dt = dt_t.to_numpy()
