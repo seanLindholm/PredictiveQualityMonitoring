@@ -8,10 +8,11 @@ approved = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Specia
 
 
 def main():
-    df = getData(failed)
+    df = getData(approved)
     counter = 1
-    for path in df['bcr_dict']:        
-        openAndCloseDirectory(path,counter)
+    for path in df['bcr_dir']:     
+        if(counter > 330):   
+            openAndCloseDirectory(path,counter)
         counter+=1
 
 
