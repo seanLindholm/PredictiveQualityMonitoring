@@ -209,8 +209,6 @@ def splitData(X,y,proc_train,seed = None):
     np.random.seed(None)
     return X[Ran_indecies[:train_stop],:].float(),y[Ran_indecies[:train_stop],:].float(),X[Ran_indecies[train_stop:],:].float(),y[Ran_indecies[train_stop:],:].float()
 
-
-
 def createBatch(X_train,y_train,X_test,y_test,batch_size=32):
     #Wraps around if dataset is not devicable with 32 (append the first diff to the end of each )
     def data_batch(X,batch_size):

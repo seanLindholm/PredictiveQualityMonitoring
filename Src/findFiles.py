@@ -1,8 +1,5 @@
-from Helper import *
 import os
-
-
-
+import pandas as pd
 
 def main():
     csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\Data\\Failed_w_glu_Transform_ext.csv"
@@ -100,13 +97,6 @@ def findDictMatch(dict_,path):
             return path + "\\" + dict_
     return ""
 
-
-def findFilesMatch(file_,path):
-    for f in listDicts(path):
-        if f == file_:
-            return path + "\\" + file_
-
-    return ""
 
 
 if __name__ == "__main__":
