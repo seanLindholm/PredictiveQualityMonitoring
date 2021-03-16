@@ -69,10 +69,11 @@ def main():
             for func,save_name in zip(list_function,list_fileName):
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 mask,tight_crop = func(gray)
-                gray[~mask] = 0
+                gray[~mask] = 255
                 image = gray[tight_crop[0]:tight_crop[1],tight_crop[2]:tight_crop[3]]
                 cv2.imwrite(path+folder+"\\"+save_name+"_"+picName,image)
         print("Done: " + folder)
+
 
 def find_directory(dirName, search_path):
 
@@ -83,4 +84,4 @@ def find_directory(dirName, search_path):
     return ""
 
 if __name__ == "__main__":
-    print(find_directory("932-029-R28704-N003-A10-Failed","C:\\Users\\"))
+    main()
