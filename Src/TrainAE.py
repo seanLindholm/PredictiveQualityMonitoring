@@ -17,17 +17,17 @@ def saveImageData(save_name,file_to_save,path=""):
     print("Saving image data");couter = 1
     l = [];p = [failed,approved]
     for f in p:
-        df = getData(f);couter = 1
+        df = getData(f);counter = 1
         for folder in df['bcr_dir']:  
             p = path + "\\" + folder
             try:
                 img = cv2.cvtColor(cv2.imread(p+"\\"+ file_to_save), cv2.COLOR_BGR2GRAY)
                 img = img.astype('float32');img /= 255;img = img.reshape(1,img.shape[0],img.shape[1])
 
-                l.append(img);couter+=1
-                if(couter == 25):
+                l.append(img);counter+=1
+                if(counter == 25):
                     np.savez(save_name+".npz",l)
-                    couter = 1
+                    counter = 1
             except:
                 pass
     np.savez(save_name+".npz",l)
@@ -60,19 +60,21 @@ def main(SaveImgData=False):
     if SaveImgData:
         path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files"
         saveImageData("numpyData\\img_data_innerCircle_YM","inner_crop_YM.jpg",path=path)
-        print("Done file ym 1")
-        saveImageData("numpyData\\img_data_bothCircles_YM","both_crop_YM.jpg",path=path)
-        print("Done file ym 2")
-
+        print("Done file ym inner circle")
         saveImageData("numpyData\\img_data_innerCircle_CA","inner_crop_CA.jpg",path=path)
-        print("Done file ca 1")
+        print("Done file ca inner circle")
+        
+        saveImageData("numpyData\\img_data_bothCircles_YM","both_crop_YM.jpg",path=path)
+        print("Done file ym outter circle")
+
+      
         saveImageData("numpyData\\img_data_bothCircles_CA","both_crop_CA.jpg",path=path)
-        print("Done file ca 2")
+        print("Done file ca outter circle")
   
 
 
     net = AE(1).to(device)
-    data = loadImageData("numpyData\\img_data_innerCircle_CA")
+    data = loadImageData("numpyData\\img_data_innerCircle_YM")
     split = int(data.shape[0]*0.8)
     data_indx = np.random.permutation(data.shape[0])
     train = data[data_indx[:split]][:]
@@ -96,7 +98,8 @@ def main(SaveImgData=False):
     plot(hist_loss,hist_acc)
 
     img = test[55].reshape(1,1,256,256)
-    rec,_=net.forward(img)
+    rec,code=net.forward(img)
+    print(code.shape)
     img = img[0][0]*255
     img = img.astype('uint8')
     cv2.imshow('Original',img)
