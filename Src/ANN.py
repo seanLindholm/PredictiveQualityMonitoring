@@ -214,8 +214,8 @@ class AE(nn.Module):
 
         super(AE, self).__init__()
         #Encoder
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=3, padding=1)  
-        self.conv2 = nn.Conv2d(32, 8, 3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=3, padding=1)  
+        self.conv2 = nn.Conv2d(16, 8, 3, padding=1)
         self.conv3 = nn.Conv2d(8, 2, 3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
         #self.linear = nn.Linear(32768,8192)
@@ -223,8 +223,8 @@ class AE(nn.Module):
 
         #Decoder
         self.t_conv3 = nn.ConvTranspose2d(2, 8, 2,stride=2)
-        self.t_conv2 = nn.ConvTranspose2d(8, 32, 1)
-        self.t_conv1 = nn.ConvTranspose2d(32, in_channels, 1)
+        self.t_conv2 = nn.ConvTranspose2d(8, 16, 2,stride=2)
+        self.t_conv1 = nn.ConvTranspose2d(16, in_channels, 1)
 
 
 
@@ -240,10 +240,13 @@ class AE(nn.Module):
         samples= x.shape[0]
         x = F.relu(self.conv1(x))
         #print(x.shape)
+        x = self.pool(x)
+
         x = F.relu(self.conv2(x))
         #print(x.shape)
         x = self.pool(x)
         x = F.relu(self.conv3(x))
+
         #print(x.shape)
         code = x.flatten(start_dim=1)
         #code = self.linear(x)

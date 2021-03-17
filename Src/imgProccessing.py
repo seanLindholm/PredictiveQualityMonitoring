@@ -105,23 +105,6 @@ def detectSensor(img):
         cv2.circle(gray,(i[0],i[1]),2,(0,0,255),3)
 
 
-    # cv2.rectangle(gray,(mid_x,mid_y),(mid_x+2,mid_y),(0,255,0),2)
-    # cv2.rectangle(gray,(mid_x,mid_y),(mid_x,mid_y+2),(0,255,0),2)
-
-    # section_x = gray[:][mid_y]
-    # section_y = gray[mid_x][:]
-
-    # x = np.arange(section_x.shape[0])
-    # y = np.arange(section_y.shape[0])
-
-    # plt.plot(x,section_x)
-    # plt.plot(y,section_y)
-    # plt.show()
-   
-    # cv2.imshow('detected circles',gray)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-
 def extractMidSection(img):
     gray = img
     if(img.shape[2] > 0):
@@ -131,6 +114,8 @@ def extractMidSection(img):
 
     section_x = 1/(gray[:][mid_y])
     section_y = 1/(gray[mid_x][:])
+
+    
 
     x = np.arange(section_x.shape[0])
     y = np.arange(section_y.shape[0])
@@ -155,7 +140,7 @@ def extractMidSection(img):
     plt.show()
 def main():
 
-    img_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\932-029-R28328-N002-A3-Failed\\both_crop_YM.jpg"
+    img_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\932-029-R28328-N002-A3-Failed\\both_crop_RAW.jpg"
     img = cv2.imread(img_path)
     extractMidSection(img)
     #CreateAndSaveImgs()

@@ -74,7 +74,7 @@ def main(SaveImgData=False):
 
 
     net = AE(1).to(device)
-    data = loadImageData("numpyData\\img_data_innerCircle_YM")
+    data = loadImageData("numpyData\\img_data_innerCircle_CA")
     split = int(data.shape[0]*0.8)
     data_indx = np.random.permutation(data.shape[0])
     train = data[data_indx[:split]][:]
@@ -82,7 +82,7 @@ def main(SaveImgData=False):
 
     hist_loss = np.array([])
     hist_acc = np.array([])
-    train_step = 16
+    train_step = 12
     test_step = int(train_step/4)
     tail_train = 0;train_start = train_step
     tail_test = 0; test_start = test_step

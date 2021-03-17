@@ -1,0 +1,35 @@
+Stages:
+
+RAW -scan (images) - Mid section x and y + CNN/AE reduction
+	- NO CA YM Time_betw_scan CA humidty, CA Temperatur
+	* Output -> DEA score or the likes giving some score
+
+
+CA -scan (images) - Mid section x and y + CNN/AE reduction
+	- GOT CA CA humidity CA Tempearture + Output from RAW 
+	- NO YM Time_betw_scan
+	* Output -> DEA score or the likes giving some score
+
+
+YM -scan (images) - Mid section x and y + CNN/AE reduction
+	- GOT CA CA humidity CA Tempearture Time between scan, YM + Output from YM 
+	* Output -> DEA score or the likes giving some score
+	
+
+Questions:
+
+- Can we train a model from a stage at YM and then "just" NULL (or zero) all missing values?
+- Is it enough to look at the baggrund removal picture of the sensor?
+- 
+
+Workplan:
+- Gather/saving bcr files each week (maybe save it in DB)
+- Scrap AE and go with CNN
+- Model for each stage (connect/disconnect)
+	* Flexible enough to explore
+	* maybe three outputs that maps to DEA
+	* connected final output comes from YM is DEA
+	
+- DEA score as label/target
+- possiblity to explore differnet areas (img) - img cuts (proccessing)
+- Statistical models 
