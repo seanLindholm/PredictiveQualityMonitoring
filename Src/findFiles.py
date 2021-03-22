@@ -1,29 +1,37 @@
 import os
 import pandas as pd
+from datetime import datetime
 
 def main():
-    csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\Data\\Failed_w_glu_Transform_ext.csv"
-    out_csv_file = "failed_ext.csv"
-    save_dir = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\Data\\bcr_files\\" 
-    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file)
-    print("Next file!")
-    csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\Data\\Approved_w_glu_Transform_ext.csv"
-    out_csv_file = "approved_ext.csv"
-    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file)
 
+    csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Failed_w_glu_Transform_ext.csv"
+    out_csv_file = "failed_ext.csv"
+    save_dir = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\" 
+    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,True)
+    print("Next file!")
+    csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Approved_w_glu_Transform_ext.csv"
+    out_csv_file = "approved_ext.csv"
+    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,False)
 
 
 def getData(data_path):
     return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',encoding='latin_1')
 
 
-def findAndCopyBCRFiles(csv_file,save_dir,output_file,save_counter=100):
+def findAndCopyBCRFiles(csv_file,save_dir,output_file,IsFailed,save_counter=100):
+    date_csv = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\date_stoppers.csv"
+
     path_dir = "Y:\\4746 - Processdata\\7_3DSCAN\\ODIN\\"
     w_scanners= ["U66794_ID1","U54497_ID2","U66794_ID3","U66794_ID5","U66794_ID6"]
+    dt_date = getData(date_csv)
+    stop_date = dt_date['failed_bcr_date'][0] if IsFailed else dt_date['approved_bcr_data'][0]
+    new_stop = stop_date
+    stop_date = datetime.strptime(stop_date,'%d-%m-%Y %H:%M')
     dt = getData(csv_file)
     counter = 0
     res_counter = 0
     file_counter = 0
+    foundNewStopDate = False
     for col in dt.columns: 
         first_col = col
         break 
@@ -37,11 +45,10 @@ def findAndCopyBCRFiles(csv_file,save_dir,output_file,save_counter=100):
             res = findDictMatch(dict_,path_dir + scanner)
             if(res != ""):
                 break
-        
+        curr_time = datetime.strptime(r['Timestamp'],'%d-%m-%Y %H:%M')
         # 20 files in a row with no data. Expect there to be none
-        if(res_counter == 50):
-            dt.to_csv(output_file,index=False,encoding='latin-1')
-            return
+        if(res_counter == 50 or curr_time <= stop_date):
+            break
         
         if (res == ""): print("Didn't find anyting, aboard!"); res_counter+=1;continue
         res_counter = 0
@@ -57,24 +64,29 @@ def findAndCopyBCRFiles(csv_file,save_dir,output_file,save_counter=100):
         files = [f1,f2,f3]
         res_files=[]
         for file_ in files:
-            res_files.append(findFilesMatch(file_,res))
+            res_files.append(findDictMatch(file_,res))
 
 
         #Now where all files have been found (hopefully) copy them to another location
-        save_directory = save_dir+f"{dict_}-A{r['ArrayNumber']}-{r['Class']}"
-        if not os.path.exists(save_directory):
-            os.makedirs(save_directory)
+        save_folder = f"{dict_}-A{r['ArrayNumber']}-{r['Class']}"
+        save_path = save_dir+f"{dict_}-A{r['ArrayNumber']}-{r['Class']}"
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
         names = ["RAW","CA","YM"]
-        dt.loc[index,first_col] = save_directory            
+        dt.loc[index,first_col] = save_folder            
 
         file_counter = 0
         for file_path,name in zip(res_files,names):
-            os.system(f'copy "{file_path}" "{save_directory}\\{name}.bcr"')
+            os.system(f'copy "{file_path}" "{save_path}\\{name}.bcr"')
             file_counter += 1
         
         if(file_counter == 3):
-            dt.loc[index,first_col] = save_directory  
+            print(f"Current timestamp: {curr_time}, stop by {stop_date}, new stop: {new_stop}")
+            if(not foundNewStopDate):
+                foundNewStopDate = True
+                new_stop = r['Timestamp']
+            dt.loc[index,first_col] = save_folder  
         
 
         counter+=1
@@ -82,7 +94,16 @@ def findAndCopyBCRFiles(csv_file,save_dir,output_file,save_counter=100):
             print("Saved file so far")
             dt.to_csv(output_file,index=False,encoding='latin-1')
             counter = 0
-        
+    
+    #Save the csv files one last time
+    dt.to_csv(output_file,index=False,encoding='latin-1')
+    if IsFailed:
+        dt_date['failed_bcr_date'] = new_stop
+    else:
+        dt_date['approved_bcr_data'] = new_stop
+    dt_date.to_csv(date_csv,index=False,encoding='latin-1')
+
+
 
 
 
