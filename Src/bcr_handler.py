@@ -4,13 +4,18 @@ import pandas as pd
 import cv2
 from keyboard import * 
 
-failed = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\failed_ext.csv"
-approved = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\approved_ext.csv"
+#path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+#file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
 
-failed_NoNaN = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\failed_noNaN.csv"
-approved_NoNaN = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\approved_noNaN.csv"
+path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
+failed = file_path + "failed_ext.csv"
+approved = file_path + "approved_ext.csv"
 
-path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+failed_NoNaN = file_path + "failed_noNaN.csv"
+approved_NoNaN = file_path + "approved_noNaN.csv"
+
+
 def extendNoNaNData(file,ext_file):
     df = getData(file)
     print(df.columns)
@@ -29,7 +34,7 @@ def extendNoNaNData(file,ext_file):
 def BcrToJpg(data_file):
     df = getData(data_file)
     counter = 1
-    for folder in df['ï»¿bcr_dir']:     
+    for folder in df['bcr_dir']:     
         n_f = openAndCloseDirectory(path + folder,counter)
         if(n_f > 3): print(f"Jpg already saved for {folder}");counter+=1;continue
         print(f"Folder number: {counter}")

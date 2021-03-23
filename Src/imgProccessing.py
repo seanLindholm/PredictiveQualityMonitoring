@@ -140,10 +140,10 @@ def extractMidSection(img):
     plt.show()
 def main():
 
-    img_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\932-029-R28328-N002-A3-Failed\\both_crop_RAW.jpg"
-    img = cv2.imread(img_path)
-    extractMidSection(img)
-    #CreateAndSaveImgs()
+    #img_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\932-029-R28328-N002-A3-Failed\\both_crop_RAW.jpg"
+    #img = cv2.imread(img_path)
+    #extractMidSection(img)
+    CreateAndSaveImgs()
 
 
 
