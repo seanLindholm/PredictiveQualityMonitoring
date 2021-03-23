@@ -24,6 +24,21 @@ Questions:
 
 Workplan:
 - Gather/saving bcr files each week (maybe save it in DB)
+
+	- Construct standalone CNN
+		* Test what image yields the best reulst (when predicting DEA score)
+		* DO this for RAW, YM adn CA (maybe differnet crops give differnet results)
+	
+	- Construct standalone LSTM
+		* Test on what image the mid section gives best result
+		* DO this for RAW, YM adn CA (maybe differnet crops give differnet results)
+
+	- Build all these together and then with a fully connected layer that user the above outputs plus 
+	  whatever else there might be at that stage
+
+	
+	- Consider the connenctivite of the different models
+ 
 - Scrap AE and go with CNN
 - Model for each stage (connect/disconnect)
 	* Flexible enough to explore
