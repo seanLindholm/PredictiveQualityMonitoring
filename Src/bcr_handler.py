@@ -13,6 +13,7 @@ approved_NoNaN = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\
 path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
 def extendNoNaNData(file,ext_file):
     df = getData(file)
+    print(df.columns)
     df = removeNANrows(df,'bcr_dir')
     if df.empty:
         print("Datafile is empty, aboard..")
@@ -28,7 +29,7 @@ def extendNoNaNData(file,ext_file):
 def BcrToJpg(data_file):
     df = getData(data_file)
     counter = 1
-    for folder in df['bcr_dir']:     
+    for folder in df['ï»¿bcr_dir']:     
         n_f = openAndCloseDirectory(path + folder,counter)
         if(n_f > 3): print(f"Jpg already saved for {folder}");counter+=1;continue
         print(f"Folder number: {counter}")
@@ -48,9 +49,13 @@ def BcrToJpg(data_file):
 
 def main():
 
-    extendNoNaNData(failed,failed_NoNaN)
-    extendNoNaNData(approved,approved_NoNaN)
+    #extendNoNaNData(failed,failed_NoNaN)
+    #extendNoNaNData(approved,approved_NoNaN)
     
+    #df = removeNANrows(getData(failed),"ï»¿bcr_dir")
+    #saveDF(df,failed_NoNaN)
+    #df = removeNANrows(getData(approved),"ï»¿bcr_dir")
+    #saveDF(df,approved_NoNaN)
     BcrToJpg(failed_NoNaN)
     BcrToJpg(approved_NoNaN)
 
@@ -70,10 +75,11 @@ def saveDF(df,name):
 
 
 def getData(data_path):
-    return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',encoding='latin_1',na_values='')
+    return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',na_values='')
 
 
 def removeNANrows(df,column_name):
+    #print(df)
     return df[df[column_name].notna()]
 
 
