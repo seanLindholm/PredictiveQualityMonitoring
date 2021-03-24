@@ -3,14 +3,8 @@ import os
 import pandas as pd
 import cv2
 from keyboard import * 
+from constants import *
 
-#path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
-#file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
-
-path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
-file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
-failed = file_path + "failed_ext.csv"
-approved = file_path + "approved_ext.csv"
 
 failed_NoNaN = file_path + "failed_noNaN.csv"
 approved_NoNaN = file_path + "approved_noNaN.csv"
@@ -50,19 +44,40 @@ def BcrToJpg(data_file):
         counter+=1
             
     
-    
+def removeDublicates():
+    #This function removes dupilcates and the folders that was wrongly labelled good and bad
+    df_f = getData(failed_NoNaN)
+    df_a = getData(approved_NoNaN)
+    folder_del = []
+    df_f_del = []
+    df_a_del = []
+    for index,r in df_f.iterrows():
+        folder = r['bcr_dir'][:-6] + "Approved"
+        hit = df_a.loc[(df_a['bcr_dir'] == folder)]["bcr_dir"]
+        if(not df_a.index[(df_a['bcr_dir'] == folder)].empty):
+            folder_del.append(hit.tolist()[0])
+            folder_del.append(r['bcr_dir'])
+            df_f_del.append(index)
+            df_a_del.append(hit.index.tolist()[0])
+    df_f.drop(df_f_del,inplace=True)
+    df_a.drop(df_f_del,inplace=True)
+    saveDF(df_f,failed_NoNaN)
+    saveDF(df_a,approved_NoNaN)
+    for f in folder_del:
+        os.system("rmdir "+path+f + " /s /q")
+
 
 def main():
-
     #extendNoNaNData(failed,failed_NoNaN)
     #extendNoNaNData(approved,approved_NoNaN)
+    removeDublicates()
     
     #df = removeNANrows(getData(failed),"ï»¿bcr_dir")
     #saveDF(df,failed_NoNaN)
     #df = removeNANrows(getData(approved),"ï»¿bcr_dir")
     #saveDF(df,approved_NoNaN)
-    BcrToJpg(failed_NoNaN)
-    BcrToJpg(approved_NoNaN)
+    #BcrToJpg(failed_NoNaN)
+    #BcrToJpg(approved_NoNaN)
 
 
         
@@ -74,13 +89,6 @@ def openAndCloseDirectory(path,counter):
         os.startfile(path)
     return size
 
-def saveDF(df,name):
-    df.to_csv(name,index=False,encoding='latin-1')
-
-
-
-def getData(data_path):
-    return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',na_values='')
 
 
 def removeNANrows(df,column_name):

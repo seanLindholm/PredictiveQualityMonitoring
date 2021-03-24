@@ -390,18 +390,18 @@ def main():
     # print("-------------------DUMMY TEST END-----------------------------")
 
     
-    nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=32,class_prediction=False,epochs=500,early_stopping=False)
-    testBestNN(nn,ran_num_sample = 15)
+    #nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=32,class_prediction=False,epochs=500,early_stopping=False)
+    #testBestNN(nn,ran_num_sample = 15)
 
-    nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=64,class_prediction=False,epochs=500,early_stopping=False)
-    testBestNN(nn,ran_num_sample = 15)
+    #nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=64,class_prediction=False,epochs=500,early_stopping=False)
+    #testBestNN(nn,ran_num_sample = 15)
     
-    nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=128,class_prediction=False,epochs=500,early_stopping=False)
-    testBestNN(nn,ran_num_sample = 15)
+    #nn = runANN(split=0.8,seed=None,num_runs=5,batch_size=128,class_prediction=False,epochs=500,early_stopping=False)
+    #testBestNN(nn,ran_num_sample = 15)
     
     
     analyseClusterDistribution(Mixed5 = mixed_transform_5, Mixed4 = mixed_transform_4, eff5 = eff_mixed_center_name_5, eff4 = eff_mixed_center_name_4, transformed=True)
-    analyseClusterDistribution(Mixed5 = mixed_5, Mixed4 = mixed_4, eff5=cluster_center_5,eff4=cluster_center_4, transformed=False)
+    #analyseClusterDistribution(Mixed5 = mixed_5, Mixed4 = mixed_4, eff5=cluster_center_5,eff4=cluster_center_4, transformed=False)
 
     # test()
     

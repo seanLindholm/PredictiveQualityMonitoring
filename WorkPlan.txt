@@ -23,7 +23,8 @@ Questions:
 - 
 
 Workplan:
-- Gather/saving bcr files each week (maybe save it in DB)
+- Gather/saving bcr files each week (maybe save it in DB) 
+	* Investigate why some are both approved and failed
 
 	- Construct standalone CNN
 		* Test what image yields the best reulst (when predicting DEA score)

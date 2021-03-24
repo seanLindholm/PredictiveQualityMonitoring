@@ -2,8 +2,7 @@ import cv2
 import numpy as np 
 import os
 import matplotlib.pyplot as plt
-
-path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+from constants import *
 
 
 def listDicts(path):

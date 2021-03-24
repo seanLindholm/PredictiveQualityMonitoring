@@ -89,4 +89,4 @@ def printOutput(dh_list,start_cluster=2,include_pca=False):
 
 
 
-   
+printOutput([Data_handler(eff_mixed_name)])
