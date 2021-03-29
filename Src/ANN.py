@@ -336,6 +336,127 @@ class AE(nn.Module):
         plt.close('all')
 
 
+class CNN(nn.Module):
+    """
+        Expects a picture of any dimention as input
+    """
+    def __init__(self,in_channels,early_stopping=True):
+        #this is used in the loss function to give a higher penelty if it also misses the correct class label
+        self.early_stopping = early_stopping
+
+        super(CNN, self).__init__()
+        #Encoder
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1)  
+        self.conv2 = nn.Conv2d(64, 32, 3, padding=1)
+        self.conv3 = nn.Conv2d(32, 16, 3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.linear1 = nn.Linear(4096,2048)
+        self.linear2 = nn.Linear(2048,512)
+        self.linear3 = nn.Linear(512,1)
+
+        #The optimizer
+        self.optimizer = optim.Adam(self.parameters(),lr=10e-2)
+
+        #Loss        
+        self.loss = nn.MSELoss()
+
+    def forward(self,x):
+        if not torch.is_tensor(x):
+            x = Variable(torch.tensor(x)).to(device)
+        samples= x.shape[0]
+        x = F.relu(self.conv1(x))
+        #print(x.shape)
+        x = self.pool(x)
+
+        x = F.relu(self.conv2(x))
+        #print(x.shape)
+        x = self.pool(x)
+        x = F.relu(self.conv3(x))
+        x = self.pool(x).flatten(start_dim=1)
+        print(x.shape)
+
+        x=F.relu(self.linear1(x))
+        x=F.relu(self.linear2(x))
+        x=F.relu(self.linear3(x))
+        return x
+
+    def train(self,X_train,X_test,y_train,y_test,epochs=10):
+        X_train = torch.tensor(X_train) if not torch.is_tensor(X_train) else X_train
+        X_test = torch.tensor(X_test) if not torch.is_tensor(X_test) else X_test
+        y_train = torch.tensor(y_train) if not torch.is_tensor(y_train) else y_train
+        y_test = torch.tensor(y_test) if not torch.is_tensor(y_test) else y_test
+        
+
+        self.epoch_loss = []
+        self.epoch_acc = []
+        old_acc = 0
+        threshold = 0.01
+        max_iter = 0
+        for e in range(epochs): 
+            
+            # --- Trainig ----- #
+            loss_e = 0
+    
+            self.optimizer.zero_grad()
+            pred = self(Variable(X_train).to(device))
+            #Loss is with same input picture after decoding (Reconstruction loss)
+            out = self.loss(pred,Variable(y_train).to(device))
+            out.backward()
+
+            self.optimizer.step()
+            loss_e = out.data.cpu().numpy()
+
+            self.epoch_loss.append((loss_e))
+           
+            # -- Testing -- #
+            loss_train = 0
+
+            pred = self(Variable(X_test).to(device))
+            #Loss is with same input picture after decoding (Reconstruction loss)
+            out = self.loss(pred,Variable(y_test).to(device))
+            loss_train = out.data.cpu().numpy()
+
+            
+            
+
+            self.epoch_acc.append(loss_train) 
+
+            # # -- Early stopping -- #
+            if self.early_stopping:
+                if abs(loss_train-old_acc) < threshold:
+                    if max_iter == 150:
+                        e = epochs
+                        break
+                    max_iter +=1
+                else:
+                    max_iter = 1
+                    old_acc = loss_train 
+
+            print(f"\r{e+1}/{epochs}",end='\r')
+        # --- return acc after trainig --- #
+
+        return loss_train
+
+
+    def plot(self):
+        plt.figure('Loss and accuracy')
+        plt.plot(self.epoch_loss)
+        plt.plot(self.epoch_acc)
+      
+        plt.legend(["loss","acc"])
+
+        plt.figure('Loss')
+        plt.plot(self.epoch_loss)
+        plt.legend(["loss"])
+        
+        plt.figure('Accuracy')
+        plt.plot(self.epoch_acc)
+        plt.legend(["acc"])
+     
+        plt.show(block=False)
+        input("Press enter to close all windows")
+        plt.close('all')
+
 
 
 def splitData(X,y,proc_train,seed = None):
