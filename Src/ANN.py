@@ -440,7 +440,8 @@ class CNN(nn.Module):
                 pred = self(Variable(X_tst).to(device))
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_tst).to(device))
-                acc_test = 1-(abs(pred.data.cpu()-y_tst))
+                acc_test = 1
+                -(abs(pred.data.cpu()-y_tst))
                 #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
 
 

@@ -130,9 +130,6 @@ dmypy.json
 
 #Big data folder
 Src/numpyData/
-Data/bcr_files/CA_both
-Data/bcr_files/LSTM_YM
-Data/bcr_files/RAW_both
-Data/bcr_files/YM_both
+Data/models/
 
 

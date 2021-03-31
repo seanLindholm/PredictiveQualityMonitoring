@@ -4,6 +4,7 @@ import pandas as pd
 import cv2
 from keyboard import * 
 from constants_ import *
+from imgProccessing import CreateAndSaveImgs
 
 
 failed_NoNaN = file_path + "failed_noNaN.csv"
@@ -124,6 +125,7 @@ def main():
     #saveDF(df,approved_NoNaN)
     #BcrToJpg(failed_NoNaN)
     #BcrToJpg(approved_NoNaN)
+    CreateAndSaveImgs()
     print("Removing odd sized imgaes")
     removeOddSizeImages()
 

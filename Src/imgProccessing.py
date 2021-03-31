@@ -76,13 +76,17 @@ def CreateAndSaveImgs():
             pic = path+folder+"\\"+picName
             img = cv2.imread(pic)
             for func,save_name in zip(list_function,list_fileName):
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                mask,tight_crop = func(gray)
-                gray[~mask] = 255
-                image = gray[tight_crop[0]:tight_crop[1],tight_crop[2]:tight_crop[3]]
-                # cv2.imshow('Cropped image',image)
-                # cv2.waitKey(0)
-                cv2.imwrite(path+folder+"\\"+save_name+"_"+picName,image)
+                try:
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    mask,tight_crop = func(gray)
+                    gray[~mask] = 255
+                    image = gray[tight_crop[0]:tight_crop[1],tight_crop[2]:tight_crop[3]]
+                    # cv2.imshow('Cropped image',image)
+                    # cv2.waitKey(0)
+                    cv2.imwrite(path+folder+"\\"+save_name+"_"+picName,image)
+                except:
+                    print(f"Problem at: {pic}")
+               
         print(f"Done: {counter}")
         counter+=1
 
@@ -141,15 +145,3 @@ def extractMidSection(img):
 
     plt.show()
 
-def main():
-
-    img_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\932-029-R28328-N002-A3-Failed\\both_crop_YM.jpg"
-    img = cv2.imread(img_path)
-    extractMidSection(img)
-    #CreateAndSaveImgs()
-
-
-
-
-if __name__ == "__main__":
-    main()
