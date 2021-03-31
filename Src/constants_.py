@@ -7,6 +7,7 @@ import numpy as np
 path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
 file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
 data_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\"
+dummy_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\dummy_data\\"
 failed = file_path + "failed_ext.csv"
 failed_NoNaN = file_path + "failed_NoNaN.csv"
 failed_DEA = file_path + "failed_withDEAScore.csv"
@@ -46,3 +47,6 @@ def saveImageData(save_name,file_to_save,path=""):
             except:
                 pass
     np.savez(save_name+".npz",l)
+
+
+
