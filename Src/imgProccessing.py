@@ -2,7 +2,7 @@ import cv2
 import numpy as np 
 import os
 import matplotlib.pyplot as plt
-from constants import *
+from constants_ import *
 
 
 def listDicts(path):
@@ -111,9 +111,12 @@ def extractMidSection(img):
     mid_x = int(gray.shape[0]/2)
     mid_y = int(gray.shape[1]/2)
 
-    section_x = 1/(gray[:][mid_y])
-    section_y = 1/(gray[mid_x][:])
+    section_x = (gray[mid_y,:])
+    section_y = (gray[:,mid_x])
 
+    print(gray.shape)
+    print(section_x.shape)
+    print(section_y.shape)
     
 
     x = np.arange(section_x.shape[0])
@@ -137,12 +140,13 @@ def extractMidSection(img):
 
 
     plt.show()
+
 def main():
 
-    #img_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\932-029-R28328-N002-A3-Failed\\both_crop_RAW.jpg"
-    #img = cv2.imread(img_path)
-    #extractMidSection(img)
-    CreateAndSaveImgs()
+    img_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\932-029-R28328-N002-A3-Failed\\both_crop_YM.jpg"
+    img = cv2.imread(img_path)
+    extractMidSection(img)
+    #CreateAndSaveImgs()
 
 
 
