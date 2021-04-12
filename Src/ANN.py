@@ -418,9 +418,9 @@ class CNN(nn.Module):
                 # --- Trainig ----- #
                 #torch.autograd.set_detect_anomaly(True)
                 X_t = torch.unsqueeze(X_t, 0)
-                y_t = y_t.reshape(1,-1)
+                y_t = (y_t*100).reshape(1,-1)
                 X_tst=torch.unsqueeze(X_tst, 0)
-                y_tst = y_tst.reshape(1,-1)
+                y_tst = (y_tst*100).reshape(1,-1)
 
             
                 # --- Trainig ----- #
@@ -440,8 +440,7 @@ class CNN(nn.Module):
                 pred = self(Variable(X_tst).to(device))
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_tst).to(device))
-                acc_test = 1
-                -(abs(pred.data.cpu()-y_tst))
+                acc_test = 100-(abs(pred.data.cpu()-y_tst))
                 #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
 
 
@@ -458,7 +457,7 @@ class CNN(nn.Module):
             # # -- Early stopping -- #
             if self.early_stopping:
                 if abs(acc_test-old_acc) < threshold:
-                    if max_iter == 50:
+                    if max_iter == 10:
                         e = epochs
                         break
                     max_iter +=1

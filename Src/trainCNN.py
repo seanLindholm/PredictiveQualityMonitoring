@@ -100,7 +100,7 @@ def main(SaveImgData=False):
     tail_test = 0; test_start = test_step
 
   
-    net.train(X_train,X_test,y_train,y_test,epochs=1000)
+    net.train(X_train,X_test,y_train,y_test,epochs=2000)
     hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
     hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
     tail_train+=train_step;train_start+=train_step

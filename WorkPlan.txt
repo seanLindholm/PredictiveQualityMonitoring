@@ -29,6 +29,8 @@ Workplan:
 	- Construct standalone CNN
 		* Test what image yields the best reulst (when predicting DEA score)
 		* DO this for RAW, YM adn CA (maybe differnet crops give differnet results)
+		* Look into variance (done by faild/non failed)
+		* Try and fit the approved vs not approved pictures
 	
 	- Construct standalone LSTM
 		* Test on what image the mid section gives best result
@@ -46,6 +48,8 @@ Workplan:
 	* maybe three outputs that maps to DEA
 	* connected final output comes from YM is DEA
 	
+- Plot variables(parameters) to see if there is any signifcant difference between good and bad (if no DEA suffers)
+	* Parameter can still be relevant (for the company) but the data might show, that it is not (so much) 
 - DEA score as label/target
 - possiblity to explore differnet areas (img) - img cuts (proccessing)
 - Statistical models 
