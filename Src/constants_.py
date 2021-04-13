@@ -52,14 +52,13 @@ def saveImageData(save_name,file_to_save,path=""):
                 pass
     np.savez(save_name+".npz",l)
 
-def outlierRemoval(file,col_name,contamination='auto'):
+def outlierRemoval(file,contamination='auto'):
     """
         This outlier detector makes use of the Isolated tree method, from
         the sklearn library.
     """
     df = getData(file)
-    columns = df.columns[9:]
-    df_2 = df[columns]
+    df_2 = df[function_test_col_transformed]
     col = df_2.to_numpy()
     iso = isoF(contamination=contamination)
     yhat = iso.fit_predict(col.reshape(-1,6))
@@ -70,4 +69,17 @@ def outlierRemoval(file,col_name,contamination='auto'):
         if(~mask[i]): index_del.append(i)
     df = df.drop(index_del)
     saveDF(df,file)
+
+def statisticalAnalysis(file):
+    #["2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac høj O2","Sensitivity [pA/µM]","t on 10/5 mM glu/lac [s]","Lav O2 - Høj O2"]
+    df = getData(file)
+    df = df[function_test_col_transformed]
+    data_num = df.to_numpy()
+    print(f"Statistics for {file}")
+    for i in range(len(function_test_col_transformed)):
+        print(f"column: {function_test_col_transformed[i]}")
+        print(f"std: {np.std(data_num[:,i])}")
+        print(f"var: {np.var(data_num[:,i])}")
+        print(f"mean: {np.mean(data_num[:,i])}")
+        print()
 

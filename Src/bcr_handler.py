@@ -128,6 +128,11 @@ def main():
     CreateAndSaveImgs()
     print("Removing odd sized imgaes")
     removeOddSizeImages()
+    
+    ##List variance,mean and std-deviation of the different parameters 
+    # statisticalAnalysis(file_failed)
+    # statisticalAnalysis(file_approved) 
+    #  
 
 
 

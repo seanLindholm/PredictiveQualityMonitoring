@@ -74,7 +74,7 @@ def main(SaveImgData=False):
     y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
 
     data = loadImageData("numpyData\\img_data_innerCircle_YM")
-#    data = loadImageData("numpyData\\img_data_bothCircles_CA")
+    #data = loadImageData("numpyData\\img_data_bothCircles_CA")
     #data = loadImageData("numpyData\\img_data_bothCircles_YM")
 
     big_picture = False
@@ -86,25 +86,14 @@ def main(SaveImgData=False):
     X_test = data[data_indx[split:]][:]
     y_train = y[data_indx[:split]][:]
     y_test = y[data_indx[split:]][:]
-    print(X_train.shape)
 
     hist_loss = np.array([])
     hist_acc = np.array([])
-    if big_picture:#big picture
-        train_step = 20
-    else:
-        train_step = 32
-    
-    test_step = int(train_step/4)
-    tail_train = 0;train_start = train_step
-    tail_test = 0; test_start = test_step
 
   
     net.train(X_train,X_test,y_train,y_test,epochs=2000)
     hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
     hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
-    tail_train+=train_step;train_start+=train_step
-    tail_test+=test_step;test_start+=test_step
     
 
     plot(hist_loss,hist_acc)
