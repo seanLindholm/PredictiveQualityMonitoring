@@ -1,8 +1,10 @@
 import pandas as pd
 import cv2
 import numpy as np
+from sklearn.ensemble import IsolationForest as isoF
 #path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
 #file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
+#data_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\"
 
 path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
 file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
@@ -16,6 +18,8 @@ approved = file_path + "approved_ext.csv"
 approved_NoNaN = file_path + "approved_NoNaN.csv"
 approved_DEA = file_path + "approved_withDEAScore.csv"
 
+pure_img_approved = data_path + "Poor_func_approved.csv"
+pure_img_falied = data_path + "Poor_func_failed.csv" 
 
 
 function_test_col_transformed = ["Tid efter start [timer]","2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac høj O2",
@@ -48,5 +52,22 @@ def saveImageData(save_name,file_to_save,path=""):
                 pass
     np.savez(save_name+".npz",l)
 
-
+def outlierRemoval(file,col_name,contamination='auto'):
+    """
+        This outlier detector makes use of the Isolated tree method, from
+        the sklearn library.
+    """
+    df = getData(file)
+    columns = df.columns[9:]
+    df_2 = df[columns]
+    col = df_2.to_numpy()
+    iso = isoF(contamination=contamination)
+    yhat = iso.fit_predict(col.reshape(-1,6))
+    mask = yhat != -1
+    #print(mask.reshape(-1,1))
+    index_del = []
+    for i in range(df.shape[0]):
+        if(~mask[i]): index_del.append(i)
+    df = df.drop(index_del)
+    saveDF(df,file)
 
