@@ -10,9 +10,9 @@ from constants_ import *
 
 
 def main():
-    makeDEAReady("dea_mixed.csv")
+    #makeDEAReady("dea_mixed.csv")
     # Has to be done in stages since the dea calcuations are done in matlab
-    #appendDEAData()
+    appendDEAData()
 
 def appendDEAData():
     df_fail = getData(failed_NoNaN); df_approved = getData(approved_NoNaN)

@@ -340,10 +340,10 @@ class CNN(nn.Module):
     """
         Expects a picture of any dimention as input
     """
-    def __init__(self,in_channels,early_stopping=True,big_picture=False):
+    def __init__(self,in_channels,early_stopping=True,big_picture=False,classPrediction=False):
         #this is used in the loss function to give a higher penelty if it also misses the correct class label
         self.early_stopping = early_stopping
-
+        self.classPrediction = classPrediction
         super(CNN, self).__init__()
         #Encoder
         self.conv2 = nn.Conv2d(128, 256, 3, padding=1,stride=2)
@@ -359,7 +359,10 @@ class CNN(nn.Module):
             self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=128, kernel_size=3, padding=1) 
             self.linear1 = nn.Linear(7040,1024)
             self.linear2 = nn.Linear(1024,258)
-            self.linear3 = nn.Linear(258,1)
+            if (self.classPrediction):
+                self.linear3 = nn.Linear(258,2)
+            else:
+                self.linear3 = nn.Linear(258,1)
           
 
 
@@ -367,7 +370,11 @@ class CNN(nn.Module):
             self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=128, kernel_size=3, padding=1)  
             self.linear1 = nn.Linear(1936,512)
             self.linear2 = nn.Linear(512,256) 
-            self.linear3 = nn.Linear(256,1)
+            if (self.classPrediction):
+                self.linear3 = nn.Linear(256,2)
+            else:
+                self.linear3 = nn.Linear(256,1)
+            
       
         nn.init.xavier_uniform_(self.conv1.weight) 
 
@@ -375,7 +382,12 @@ class CNN(nn.Module):
         self.optimizer = optim.Adam(self.parameters(),lr=10e-4)
 
         #Loss        
-        self.loss = nn.MSELoss()
+        if (self.classPrediction):
+            self.loss = nn.BCELoss()
+        else:
+            self.loss = nn.MSELoss()
+
+        
 
     def forward(self,x):
         if not torch.is_tensor(x):
@@ -391,8 +403,11 @@ class CNN(nn.Module):
         
         x = x.flatten(start_dim=1)
         x=F.relu(self.linear1(x))
-        x=self.drop(F.relu(self.linear2(x)))
-        x=F.relu(self.linear3(x))
+        x=F.relu(self.linear2(x))
+        if(self.classPrediction):
+            x = F.softmax(self.linear3(x),dim=1)
+        else:
+            x=F.relu(self.linear3(x))
 
 
         return x
@@ -418,15 +433,24 @@ class CNN(nn.Module):
                 # --- Trainig ----- #
                 #torch.autograd.set_detect_anomaly(True)
                 X_t = torch.unsqueeze(X_t, 0)
-                y_t = (y_t*100).reshape(1,-1)
                 X_tst=torch.unsqueeze(X_tst, 0)
-                y_tst = (y_tst*100).reshape(1,-1)
+                if(not self.classPrediction):
+                    y_t=y_t.reshape(-1,1)
+                    y_tst = y_tst.reshape(1,-1)
+                    y_t = (y_t*100)
+                    y_tst = (y_tst*100)
+                else:
+                    y_t = y_t.reshape(1,-1)
+                    y_tst = y_tst.reshape(1,-1)
+
 
             
                 # --- Trainig ----- #
         
                 self.optimizer.zero_grad()
                 pred = self(Variable(X_t).to(device))
+                #if(self.classPrediction):
+                #    pred = torch.argmax(pred).to(device)
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_t).to(device))
                 out.backward()
@@ -440,7 +464,10 @@ class CNN(nn.Module):
                 pred = self(Variable(X_tst).to(device))
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_tst).to(device))
-                acc_test = 100-(abs(pred.data.cpu()-y_tst))
+                if not self.classPrediction:
+                    acc_test = 100-(abs(pred.data.cpu()-y_tst))
+                else:
+                    acc_test = (abs(pred.data.cpu()-y_tst)).sum()
                 #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
 
 
@@ -457,7 +484,7 @@ class CNN(nn.Module):
             # # -- Early stopping -- #
             if self.early_stopping:
                 if abs(acc_test-old_acc) < threshold:
-                    if max_iter == 10:
+                    if max_iter == 50:
                         e = epochs
                         break
                     max_iter +=1

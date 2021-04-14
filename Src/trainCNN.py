@@ -71,14 +71,17 @@ def main(SaveImgData=False):
 
     #The DEA score data
     df = getData(failed_DEA)
-    y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
-
-    data = loadImageData("numpyData\\img_data_innerCircle_YM")
+    #y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
+    y_f = np.append(np.ones(df.shape[0]).reshape(-1,1),np.zeros(df.shape[0]).reshape(-1,1),axis=1)
+    y_a = np.append(np.zeros(getData(approved_DEA).shape[0]).reshape(-1,1),np.ones(getData(approved_DEA).shape[0]).reshape(-1,1),axis=1)
+    y = np.append(y_f,y_a,axis=0).astype('float32')
+    #y = np.append(np.zeros(df.shape[0]),np.ones(getData(approved_DEA).shape[0])).reshape(-1,1).astype('int64')
+    #data = loadImageData("numpyData\\img_data_innerCircle_YM")
     #data = loadImageData("numpyData\\img_data_bothCircles_CA")
-    #data = loadImageData("numpyData\\img_data_bothCircles_YM")
+    data = loadImageData("numpyData\\img_data_bothCircles_YM")
 
-    big_picture = False
-    net = CNN(1,big_picture=big_picture).to(device)
+    big_picture = True
+    net = CNN(1,big_picture=big_picture,classPrediction=True,early_stopping=False).to(device)
     torch.save(net.state_dict(), path+"YM_both")
     split = int(data.shape[0]*0.8)
     data_indx = np.random.permutation(data.shape[0])
@@ -91,7 +94,7 @@ def main(SaveImgData=False):
     hist_acc = np.array([])
 
   
-    net.train(X_train,X_test,y_train,y_test,epochs=2000)
+    net.train(X_train,X_test,y_train,y_test,epochs=200)
     hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
     hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
     

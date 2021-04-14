@@ -22,7 +22,7 @@ pure_img_approved = data_path + "Poor_func_approved.csv"
 pure_img_falied = data_path + "Poor_func_failed.csv" 
 
 
-function_test_col_transformed = ["Tid efter start [timer]","2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac høj O2",
+function_test_col_transformed = ["2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac høj O2",
                                  "Sensitivity [pA/µM]","t on 10/5 mM glu/lac [s]","Lav O2 - Høj O2"]
 
 
