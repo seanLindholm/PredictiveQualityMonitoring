@@ -53,3 +53,6 @@ Workplan:
 - DEA score as label/target
 - possiblity to explore differnet areas (img) - img cuts (proccessing)
 - Statistical models 
+
+- Manually looking at pictures, to try and see a correlation
+- Document the data cleaning/processing -> manuel and automatic

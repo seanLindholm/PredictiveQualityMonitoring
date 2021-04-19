@@ -81,6 +81,7 @@ def removeOddSizeImages():
             folder = r['bcr_dir']
             p = path + folder
             img = cv2.cvtColor(cv2.imread(p+"\\"+ file_+".jpg"), cv2.COLOR_BGR2GRAY)
+            print(p+"\\"+ file_+".jpg")
             try:
                 img = cv2.cvtColor(cv2.imread(p+"\\"+ file_+".jpg"), cv2.COLOR_BGR2GRAY)
                 if (img.shape[0] == 256 or img.shape[0] == 482):
@@ -119,19 +120,19 @@ def main():
     #extendNoNaNData(approved,approved_NoNaN)
     #removeDublicates()
     
-    #df = removeNANrows(getData(failed),"bcr_dir")
-    #saveDF(df,failed_NoNaN)
-    #df = removeNANrows(getData(approved),"bcr_dir")
-    #saveDF(df,approved_NoNaN)
-    #BcrToJpg(failed_NoNaN)
-    #BcrToJpg(approved_NoNaN)
+    df = removeNANrows(getData(failed),"bcr_dir")
+    saveDF(df,failed_NoNaN)
+    df = removeNANrows(getData(approved),"bcr_dir")
+    saveDF(df,approved_NoNaN)
+    BcrToJpg(failed_NoNaN)
+    BcrToJpg(approved_NoNaN)
     CreateAndSaveImgs()
     print("Removing odd sized imgaes")
     removeOddSizeImages()
     
     ##List variance,mean and std-deviation of the different parameters 
-    # statisticalAnalysis(file_failed)
-    # statisticalAnalysis(file_approved) 
+    statisticalAnalysis(failed_NoNaN)
+    statisticalAnalysis(approved_NoNaN) 
     #  
 
 

@@ -61,6 +61,7 @@ def main(SaveImgData=False):
         print("Done file ca inner circle")
         saveImageData("numpyData\\img_data_innerCircle_RAW","inner_crop_RAW.jpg",path=path)
         print("Done file RAW inner circle")
+
         
         saveImageData("numpyData\\img_data_bothCircles_YM","both_crop_YM.jpg",path=path)
         print("Done file ym outter circle")
@@ -69,23 +70,57 @@ def main(SaveImgData=False):
         saveImageData("numpyData\\img_data_bothCircles_RAW","both_crop_RAW.jpg",path=path)
         print("Done file RAW outter circle")
 
+
+
+        saveImageData("numpyData\\img_data_in_innerCircle_YM","in_inner_crop_YM.jpg",path=path)
+        print("Done file YM in_inner circle")
+
     #The DEA score data
     df = getData(failed_DEA)
-    y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
-
-    data = loadImageData("numpyData\\img_data_innerCircle_YM")
+    df_a = getData(approved_DEA)
+    #y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
+    y = np.append(np.zeros(df.shape[0]),np.ones(getData(approved_DEA).shape[0])).reshape(-1,1).astype('float32')
     #data = loadImageData("numpyData\\img_data_bothCircles_CA")
+    #data = loadImageData("numpyData\\img_data_bothCircles_RAW")
+
     #data = loadImageData("numpyData\\img_data_bothCircles_YM")
+    data = loadImageData("numpyData\\img_data_in_innerCircle_YM")
+    #data = loadImageData("numpyData\\img_data_innerCircle_YM")
+    
+    
+    #80 % train 20% test
+    split = int(df.shape[0]*0.8)
+    #random indecies
+    f_data_indx = np.random.permutation(df.shape[0])
+
+    #50/50 failed and approved
+    data_f = data[:df.shape[0],:][f_data_indx]
+    #y_f = df['DEA'].to_numpy().reshape(-1,1)[f_data_indx]
+    y_f = np.zeros(df.shape[0]).reshape(-1,1)
+
+    a_data_indx = np.random.permutation(df_a.shape[0])[:df.shape[0]]
+    data_a = (data[df.shape[0]:,:])[a_data_indx]
+    #y_a = (df_a['DEA'].to_numpy())[a_data_indx].reshape(-1,1)
+    y_a = np.ones(df.shape[0]).reshape(-1,1)
+
+    #Build data train and test
+    X_train = np.append(data_f[:split,:],data_a[:split,:],axis=0)
+    X_test = np.append(data_f[split:,:],data_f[split:,:],axis=0)
+    y_train = np.append(y_f[:split,:],y_a[:split,:],axis=0)
+    y_test = np.append(y_f[split:,:],y_a[split:,:],axis=0)
+
+    #Shuffle test and train
+    train_shuffle = np.random.permutation(X_train.shape[0])
+    test_shuffle = np.random.permutation(X_test.shape[0])
+    X_train = X_train[train_shuffle].astype('float32') 
+    X_test = X_test[test_shuffle].astype('float32') 
+    y_train = y_train[train_shuffle].astype('float32') 
+    y_test = y_test[test_shuffle].astype('float32') 
+
 
     big_picture = False
-    net = CNN(1,big_picture=big_picture).to(device)
-    torch.save(net.state_dict(), path+"YM_both")
-    split = int(data.shape[0]*0.8)
-    data_indx = np.random.permutation(data.shape[0])
-    X_train = data[data_indx[:split]][:]
-    X_test = data[data_indx[split:]][:]
-    y_train = y[data_indx[:split]][:]
-    y_test = y[data_indx[split:]][:]
+    net = CNN(1,big_picture=big_picture,classPrediction=True,early_stopping=False).to(device)
+    torch.save(net.state_dict(), path+"YM_in_inner")
 
     hist_loss = np.array([])
     hist_acc = np.array([])

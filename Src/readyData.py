@@ -10,9 +10,9 @@ from constants_ import *
 
 
 def main():
-    makeDEAReady("dea_mixed.csv")
+    #makeDEAReady("dea_mixed.csv")
     # Has to be done in stages since the dea calcuations are done in matlab
-    #appendDEAData()
+    appendDEAData()
 
 def appendDEAData():
     df_fail = getData(failed_NoNaN); df_approved = getData(approved_NoNaN)
@@ -24,8 +24,8 @@ def appendDEAData():
     df_a_index = np.arange(f_len,dea_len)
     df_fail.insert(len(df_fail.columns),"DEA",dea_eff["dea_eff"][df_f_index].tolist(),True)
     df_approved.insert(len(df_approved.columns),"DEA",dea_eff["dea_eff"][df_a_index].tolist(),True)
-    saveDF(df_fail,"failed_withDEAScore")
-    saveDF(df_approved,"approved_withDEAScore")
+    saveDF(df_fail,"failed_withDEAScore.csv")
+    saveDF(df_approved,"approved_withDEAScore.csv")
 
 
 def makeDEAReady(save_name):

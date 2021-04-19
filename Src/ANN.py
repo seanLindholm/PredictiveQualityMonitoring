@@ -340,34 +340,34 @@ class CNN(nn.Module):
     """
         Expects a picture of any dimention as input
     """
-    def __init__(self,in_channels,early_stopping=True,big_picture=False):
+    def __init__(self,in_channels,early_stopping=True,big_picture=False,classPrediction=False):
         #this is used in the loss function to give a higher penelty if it also misses the correct class label
         self.early_stopping = early_stopping
-
+        self.classPrediction = classPrediction
         super(CNN, self).__init__()
         #Encoder
-        self.conv2 = nn.Conv2d(128, 256, 3, padding=1,stride=2)
-        self.conv3 = nn.Conv2d(256, 32, 3, padding=1)
-        self.conv4 = nn.Conv2d(32, 64, 3, padding=1)
-        self.conv5 = nn.Conv2d(64, 16, 3, padding=1,stride=3)
+        self.conv2 = nn.Conv2d(64, 16, 3, padding=1,stride=2)
+        self.conv3 = nn.Conv2d(16, 8, 3, padding=1,stride=2)
+        
 
 
         self.pool = nn.MaxPool2d(2, 2)
         self.drop = nn.Dropout(p=0.3)
         
         if big_picture:
-            self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=128, kernel_size=3, padding=1) 
-            self.linear1 = nn.Linear(7040,1024)
-            self.linear2 = nn.Linear(1024,258)
-            self.linear3 = nn.Linear(258,1)
+            self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1,stride=2) 
+            self.linear1 = nn.Linear(7680,512)
+            self.linear2 = nn.Linear(512,64)
+            self.linear3 = nn.Linear(64,1)
           
 
 
         else:
-            self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=128, kernel_size=3, padding=1)  
-            self.linear1 = nn.Linear(1936,512)
-            self.linear2 = nn.Linear(512,256) 
-            self.linear3 = nn.Linear(256,1)
+            self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1)  
+            self.linear1 = nn.Linear(8192,512)
+            self.linear2 = nn.Linear(512,64) 
+            self.linear3 = nn.Linear(64,1)
+            
       
         nn.init.xavier_uniform_(self.conv1.weight) 
 
@@ -375,7 +375,12 @@ class CNN(nn.Module):
         self.optimizer = optim.Adam(self.parameters(),lr=10e-4)
 
         #Loss        
-        self.loss = nn.MSELoss()
+        if (self.classPrediction):
+            self.loss = nn.BCELoss()
+        else:
+            self.loss = nn.MSELoss()
+
+        
 
     def forward(self,x):
         if not torch.is_tensor(x):
@@ -383,16 +388,19 @@ class CNN(nn.Module):
         samples= x.shape[0]
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-        x = self.pool(x)
         x = F.relu(self.conv3(x))
-        x = F.relu(self.conv4(x))
         x = self.pool(x)
-        x = F.relu(self.conv5(x))
+        #x = F.relu(self.conv4(x))
+        #x = self.pool(x)
+        #x = F.relu(self.conv5(x))
         
         x = x.flatten(start_dim=1)
         x=F.relu(self.linear1(x))
-        x=self.drop(F.relu(self.linear2(x)))
-        x=F.relu(self.linear3(x))
+        x=F.relu(self.linear2(x))
+        if(self.classPrediction):
+            x = torch.sigmoid(self.linear3(x))
+        else:
+            x=F.relu(self.linear3(x))
 
 
         return x
@@ -414,19 +422,22 @@ class CNN(nn.Module):
             loss_train = 0
             acc_test = 0
 
-            for X_t,y_t,X_tst,y_tst in zip(X_train,y_train,X_test,y_test):
+            for X_t,y_t in batchSplit(X_train,y_train):
                 # --- Trainig ----- #
                 #torch.autograd.set_detect_anomaly(True)
-                X_t = torch.unsqueeze(X_t, 0)
-                y_t = (y_t*100).reshape(1,-1)
-                X_tst=torch.unsqueeze(X_tst, 0)
-                y_tst = (y_tst*100).reshape(1,-1)
+                y_t=y_t.reshape(-1,1)
+                if(not self.classPrediction):
+                    y_t = (y_t*100)
+
 
             
                 # --- Trainig ----- #
         
                 self.optimizer.zero_grad()
+                #print(Variable(X_t).shape)
                 pred = self(Variable(X_t).to(device))
+                #if(self.classPrediction):
+                #    pred = torch.argmax(pred).to(device)
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_t).to(device))
                 out.backward()
@@ -434,13 +445,20 @@ class CNN(nn.Module):
                 self.optimizer.step()
                 loss_train = out.data.cpu().numpy()
 
-            
+            for X_tst,y_tst in batchSplit(X_train,y_train):
+                y_tst = y_tst.reshape(-1,1)
+                if(not self.classPrediction):
+                    y_tst = (y_tst*100)
+
                 # -- Testing -- #
 
                 pred = self(Variable(X_tst).to(device))
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_tst).to(device))
-                acc_test = 100-(abs(pred.data.cpu()-y_tst))
+                if not self.classPrediction:
+                    acc_test = torch.mean((abs(pred.data.cpu()-y_tst)))
+                else:
+                    acc_test = (abs(pred.data.cpu()-y_tst)).sum()
                 #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
 
 
@@ -627,6 +645,8 @@ class RNN(nn.Module):
         plt.close('all')
 
 
+
+
 def splitData(X,y,proc_train,seed = None):
     np.random.seed(seed)
     Ran_indecies = np.random.permutation(np.arange(X.shape[0]))
@@ -652,6 +672,16 @@ def createBatch(X_train,y_train,X_test,y_test,batch_size=32):
         return X_batch
 
     return data_batch(X_train,batch_size),data_batch(y_train,batch_size),data_batch(X_test,batch_size),data_batch(y_test,batch_size)
+
+def batchSplit(X,y,batch_size=8):
+    #Wraps around if dataset is not devicable with 32 (append the first diff to the end of each )
+    if(X.shape[0] != y.shape[0]): raise Exception(f"X data rows {X.shape} isn't equal to {y.shape} rows")  
+    start = 0
+    next_ = batch_size
+    while next_ <= X.shape[0]:
+        yield X[start:next_],y[start:next_]
+        start+=batch_size; next_ += batch_size 
+
 
 
     
