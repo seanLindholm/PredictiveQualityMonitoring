@@ -32,6 +32,14 @@ def outerCircle(img):
     mask2,_ = MaskCircles(img,130)
     return mask1 & ~mask2,crop
 
+def inner_innerCircle(img):
+    mask1,crop = MaskCircles(img,128)
+    mask2,_ = MaskCircles(img,80)
+    return mask1 & ~mask2,crop
+
+
+
+
 def bothCircles(img):
     return MaskCircles(img)
 
@@ -68,8 +76,8 @@ def find_directory(dirName, search_path):
 
 def CreateAndSaveImgs():
     list_picName = ["RAW.jpg","YM.jpg","CA.jpg"]
-    list_function = [innerCircle,outerCircle,bothCircles]
-    list_fileName = ["inner_crop","outter_crop","both_crop"]
+    list_function = [innerCircle,outerCircle,bothCircles,inner_innerCircle]
+    list_fileName = ["inner_crop","outter_crop","both_crop","in_inner_crop"]
     counter = 1
     for folder in listDicts(path):
         for picName in list_picName:
@@ -144,4 +152,18 @@ def extractMidSection(img):
 
 
     plt.show()
+
+def invertGrayscale():
+    df = getData(failed_NoNaN)
+    for i in range(154,180):
+        img = cv2.imread(path+df['bcr_dir'][i] + "\\in_inner_crop_YM.jpg")
+        gray = 255-cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        max_pix  = np.max(gray)
+        gray[gray<(max_pix-15)] = 0
+        kernel = np.ones((5,5),np.uint8)
+        gray = cv2.erode(gray,kernel)
+        cv2.imshow('image',gray)
+        cv2.imshow('image_org',img)
+        cv2.waitKey(0)
+
 
