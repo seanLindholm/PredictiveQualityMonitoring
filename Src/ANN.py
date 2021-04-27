@@ -18,26 +18,21 @@ else:
     device = torch.device('cpu')
 
 class FCNN(nn.Module):
-    def __init__(self,in_features,dh_classTarget,class_prediction=False,early_stopping=True):
+    def __init__(self,in_features,class_prediction=False,early_stopping=True):
         #this is used in the loss function to give a higher penelty if it also misses the correct class label
-        self.dh_classTarget = dh_classTarget
-        self.bounds = np.array([ [i-j,i+j] for i,j in (self.dh_classTarget.dt[:,:2])])
         self.class_prediction = class_prediction
         self.early_stopping = early_stopping
 
         super(FCNN, self).__init__()
         # First fully connected layer
-        self.fc1 = nn.Linear(in_features, 32)
+        self.fc1 = nn.Linear(in_features, 256)
         # Second fully connected layer that outputs our 10 labels
-        self.fc2 = nn.Linear(32, 128)
+        self.fc2 = nn.Linear(256, 128)
         self.fc3 = nn.Linear(128,64 )
 
         self.fc4 = nn.Linear(64, 32)
         self.fc5 = nn.Linear(32, 16)
-        if not self.class_prediction:
-            self.fc6 = nn.Linear(16, 1)
-        else:
-            self.fc6 = nn.Linear(16 ,5)
+        self.fc6 = nn.Linear(16, 1)
 
 
 
@@ -46,11 +41,13 @@ class FCNN(nn.Module):
         #Loss
         #self.loss = self.loss_function
         if self.class_prediction:
-            self.loss = nn.CrossEntropyLoss()
+            self.loss = nn.BCELoss()
         else:
             self.loss = nn.MSELoss()
 
     def forward(self,x):
+        if not torch.is_tensor(x):
+            x = Variable(torch.tensor(x)).to(device)
         #Pass through first layer
         x = self.fc1(x)
         #use ReLU as activation
@@ -71,116 +68,79 @@ class FCNN(nn.Module):
         x = self.fc6(x)
         #Squeeze the output between 0-1 with sigmoid
         if self.class_prediction:
-            output = F.softmax(x)
+            output = torch.sigmoid(x)
         else:
             output = F.relu(x)
         return output
 
-    def calc_acc(self,pred,target):
-        if not self.class_prediction:
-            indexs = target[:,2].reshape(1,-1).cpu().int()
-            if(indexs.size()[1] < 2):
-                target_class = torch.tensor(self.bounds[indexs]).to(device)
-            else:
-                index = indexs.squeeze()
-                target_class = torch.tensor(self.bounds[indexs]).to(device).squeeze()
-            p = pred.detach()
-            if indexs.size()[1] > 2:
-                return torch.sum(torch.tensor([ (bound[0] <= x and x <= bound[1]) for x,bound in zip(p,target_class)])).to(device)
-            else:
-                return torch.sum(torch.tensor([ (target_class[0] <= p and p <= target_class[1])] )).to(device)
-        else:
-            return -1
-        
            
+    def calcAccClassPred(self,pred,test):
+        count = 0
+        max_ = pred.shape[0]
+        for guess,exp in zip(pred,test):
+            if(torch.round(guess)==exp):
+                count += 1
+        return count
 
-    def loss_function(self,pred,target):   
-        # First create the multiplyer of 2 for each none correct class labeling
-        # The class labeling is defined by std range for each class
-        # This is attached in self.dh_classTarget
-        if not self.target_param:
-            indexs = target[:,2].reshape(1,-1).cpu().int()
-            if(indexs.size()[1] < 2):
-                target_class = torch.tensor(self.bounds[indexs]).to(device)
-            else:
-                index = indexs.squeeze()
-                target_class = torch.tensor(self.bounds[indexs]).to(device).squeeze()
-            p = pred.detach()
-            if indexs.size()[1] > 2:
-                p_sum = torch.sum(torch.tensor([ not (bound[0] <= x and x <= bound[1]) for x,bound in zip(p,target_class)])).to(device)
-            else:
-                p_sum = torch.tensor( not (target_class[0] <= p and p <= target_class[1] )).to(device)
-            loss = torch.mean((pred - target[:,1].reshape(-1,1)).pow(2))
-            penalty = p_sum if p_sum > 0 else torch.tensor(1).to(device)
-            return loss*penalty
-        else:
-            return torch.mean((pred - target[:,4:]).pow(2))
+    def train_(self,X_train,X_test,y_train,y_test,epochs=10):
+        X_train = torch.tensor(X_train) if not torch.is_tensor(X_train) else X_train
+        X_test = torch.tensor(X_test) if not torch.is_tensor(X_test) else X_test
+        y_train = torch.tensor(y_train) if not torch.is_tensor(y_train) else y_train
+        y_test = torch.tensor(y_test) if not torch.is_tensor(y_test) else y_test
         
 
-
-    def train(self,X_train,y_train,X_test,y_test,epochs=10):
         self.epoch_loss = []
         self.epoch_acc = []
         old_acc = 0
         threshold = 0.01
         max_iter = 0
+
         for e in range(epochs): 
-            
-            # --- Trainig ----- #
-            loss_e = 0
-    
-            for X,y in zip(X_train,y_train):
+            loss_train = 0
+            acc_test = 0
+
+            for X_t,y_t in batchSplit(X_train,y_train,batch_size=4):
+                # --- Trainig ----- #
+                self.train()
                 self.optimizer.zero_grad()
-                pred = self(Variable(X).to(device))
-                if self.class_prediction:
-                    out = self.loss(pred,Variable(y[:,2].long()).to(device))
-                else:
-                    out = self.loss(pred,Variable(y[:,1]).reshape(-1,1).to(device))
-
+                pred = self(Variable(X_t).to(device))
+                out = self.loss(pred,Variable(y_t).to(device))
                 out.backward()
+
                 self.optimizer.step()
-                loss_e += out.data.cpu().numpy()
+                loss_train += out.data.cpu().numpy()
 
-            
-            loss_e /= len(X_train)
-            self.epoch_loss.append((loss_e))
-           
-            # -- Testing -- #
-            acc = 0
-            for X,y in zip(X_test,y_test):
-                pred = self.forward(Variable(X).to(device))
-                # y[:,1] contains the dea - effcienty scores the rest is used in the loss function
-                #acc += self.calc_accuracy(pred,y)
-                max_score = torch.tensor(1)
-                if not self.class_prediction:
-                    target_train = y
-                    max_score = torch.tensor(y.shape[0]).float().to(device)
-                    acc += (self.calc_acc(pred,target_train).float()/max_score)
-                else:
-                    target_train = y[:,2].to(device)
-                    pred = torch.argmax(pred,dim=1).to(device)
-                    acc += torch.divide(torch.sum(torch.eq(pred.to(device),target_train).to(device)).float(),y.shape[0])
+            for X_tst,y_tst in batchSplit(X_test,y_test,batch_size=4):
+                # -- Testing -- #
+                self.eval()
 
-            len(X_test)/max_score
-            acc /= len(X_test)
+                pred = self(Variable(X_tst).to(device))
+                #Loss is with same input picture after decoding (Reconstruction loss)
+                out = self.loss(pred,Variable(y_tst).to(device))
 
-            self.epoch_acc.append(acc) 
+                acc_test += self.calcAccClassPred(pred.data.cpu(),y_tst)
+                #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
+
+            acc_test /= X_test.shape[0]
+            loss_train /= X_train.shape[0]
+
+            self.epoch_loss.append(loss_train)
+            self.epoch_acc.append(acc_test) 
 
             # # -- Early stopping -- #
             if self.early_stopping:
-                if abs(acc-old_acc) < threshold:
-                    if max_iter == 150:
+                if abs(acc_test-old_acc) < threshold:
+                    if max_iter == 30:
                         e = epochs
                         break
                     max_iter +=1
                 else:
                     max_iter = 1
-                    old_acc = acc 
+                    old_acc = acc_test 
 
             print(f"\r{e+1}/{epochs}",end='\r')
-        # --- return acc after trainig --- #
-
-        return acc
+            # --- return acc after trainig --- #
+        return loss_train
 
 
     def plot(self):
@@ -443,7 +403,7 @@ class CNN(nn.Module):
                 out.backward()
 
                 self.optimizer.step()
-                loss_train = out.data.cpu().numpy()
+                loss_train += out.data.cpu().numpy()
 
             for X_tst,y_tst in batchSplit(X_train,y_train):
                 y_tst = y_tst.reshape(-1,1)
@@ -456,9 +416,9 @@ class CNN(nn.Module):
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_tst).to(device))
                 if not self.classPrediction:
-                    acc_test = torch.mean((abs(pred.data.cpu()-y_tst)))
+                    acc_test += torch.mean((abs(pred.data.cpu()-y_tst)))
                 else:
-                    acc_test = (abs(pred.data.cpu()-y_tst)).sum()
+                    acc_test += (abs(pred.data.cpu()-y_tst)).sum()
                 #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
 
 

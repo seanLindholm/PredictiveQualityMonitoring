@@ -55,4 +55,6 @@ Workplan:
 - Statistical models 
 
 - Manually looking at pictures, to try and see a correlation
+- Manually confirm a pattern in 3D before trying any heavy data
+- train svm (or more classical statistical method)
 - Document the data cleaning/processing -> manuel and automatic

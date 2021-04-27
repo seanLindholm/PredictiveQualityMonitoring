@@ -2,13 +2,14 @@ import pandas as pd
 import cv2
 import numpy as np
 from sklearn.ensemble import IsolationForest as isoF
-path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
-file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
-data_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\"
+from sklearn.decomposition import PCA
+#path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+#file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
+#data_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\"
 
-#path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
-#file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
-#data_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\"
+path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
+data_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\"
 dummy_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\dummy_data\\"
 failed = file_path + "failed_ext.csv"
 failed_NoNaN = file_path + "failed_NoNaN.csv"
@@ -25,6 +26,8 @@ pure_img_falied = data_path + "Poor_func_failed.csv"
 function_test_col_transformed = ["2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac høj O2",
                                  "Sensitivity [pA/µM]","t on 10/5 mM glu/lac [s]","Lav O2 - Høj O2"]
 
+fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_void_cav","CA_cav_depth","Ca_void_mem","CA_overlap_min","CA_overlap_max","YM_void_mem"]
+#fcnn_data = ["CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_cav_depth","CA_overlap_min","CA_overlap_max"]
 
 def saveDF(df,name):
     df.to_csv(name,index=False)
@@ -32,6 +35,17 @@ def saveDF(df,name):
 def getData(data_path):
     return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',na_values='')
 
+def normalize(numpy_data):
+    """
+        Normalizes the datatable in the range (0-1) 
+        making use of the min value and peek-to-peek range (max-min)
+        and the minimum
+    """
+    org_dt_min =numpy_data.min(0)
+    org_dt_ptp = numpy_data.ptp(0)
+    numpy_data = (numpy_data - org_dt_min) / org_dt_ptp
+    return numpy_data
+        
 
 def saveImageData(save_name,file_to_save,path=""):
     print("Saving image data");couter = 1
@@ -72,16 +86,27 @@ def outlierRemoval(file,contamination='auto'):
     df = df.drop(index_del)
     saveDF(df,file)
 
-def statisticalAnalysis(file):
+def statisticalAnalysis(file,columns):
     #["2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac høj O2","Sensitivity [pA/µM]","t on 10/5 mM glu/lac [s]","Lav O2 - Høj O2"]
     df = getData(file)
-    df = df[function_test_col_transformed]
+    df = df[columns]
     data_num = df.to_numpy()
     print(f"Statistics for {file}")
-    for i in range(len(function_test_col_transformed)):
-        print(f"column: {function_test_col_transformed[i]}")
+    for i in range(len(columns)):
+        print(f"column: {columns[i]}")
         print(f"std: {np.std(data_num[:,i])}")
         print(f"var: {np.var(data_num[:,i])}")
         print(f"mean: {np.mean(data_num[:,i])}")
         print()
 
+def lowestComponancePCA(dt,explain_var,min_comp=1):
+        """
+            This function builds finds the lowest number of Principal Components
+            that is equal to or above the specified explain_variance (range 0-1)
+        """
+        for i in range(min_comp,dt.shape[1]+1):
+            pca = PCA(n_components=i)
+            pca.fit(dt)
+            if(sum(pca.explained_variance_ratio_) >= explain_var):
+                return pca
+        return pca

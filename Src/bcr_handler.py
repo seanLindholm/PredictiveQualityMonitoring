@@ -121,18 +121,21 @@ def main():
     #removeDublicates()
     
     df = removeNANrows(getData(failed),"bcr_dir")
-    saveDF(df,failed_NoNaN)
-    df = removeNANrows(getData(approved),"bcr_dir")
-    saveDF(df,approved_NoNaN)
-    BcrToJpg(failed_NoNaN)
-    BcrToJpg(approved_NoNaN)
-    CreateAndSaveImgs()
-    print("Removing odd sized imgaes")
-    removeOddSizeImages()
+    #saveDF(df,failed_NoNaN)
+    #df = removeNANrows(getData(approved),"bcr_dir")
+    #saveDF(df,approved_NoNaN)
+    #BcrToJpg(failed_NoNaN)
+    #BcrToJpg(approved_NoNaN)
+    #CreateAndSaveImgs()
+    #print("Removing odd sized imgaes")
+    #removeOddSizeImages()
     
     ##List variance,mean and std-deviation of the different parameters 
-    statisticalAnalysis(failed_NoNaN)
-    statisticalAnalysis(approved_NoNaN) 
+    #statisticalAnalysis(failed_NoNaN,function_test_col_transformed)
+    #statisticalAnalysis(approved_NoNaN,function_test_col_transformed)
+    #statisticalAnalysis(failed,fcnn_data)
+    #statisticalAnalysis(approved,fcnn_data)
+
     #  
 
 
