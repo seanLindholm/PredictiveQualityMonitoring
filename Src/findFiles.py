@@ -6,28 +6,29 @@ from constants_ import outlierRemoval
 def main():
     
 
-    csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Failed_w_glu_Transform_ext.csv"
+    #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Failed_w_glu_Transform_ext.csv"
     #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_failed.csv"
     #csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_failed.csv"
+    csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Failed_w_glu_Transform_ext.csv"
 
     out_csv_file = "failed_ext.csv"
-    save_dir = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\" 
-    #save_dir = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\" 
+    #save_dir = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\" 
+    save_dir = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\" 
     
     #First remove outliers
     #outlierRemoval(csv_file)
-    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,True)
+    #findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,True)
     findExistingData(out_csv_file,save_dir,out_csv_file)
     print("Next file!")
     
-    csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Approved_w_glu_Transform_ext.csv"
+    #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Approved_w_glu_Transform_ext.csv"
     #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_approved.csv"
-    
+    csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Approved_w_glu_Transform_ext.csv"
     #csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_approved.csv"
     out_csv_file = "approved_ext.csv"
     #First remove outliers
     #outlierRemoval(csv_file)
-    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,False)
+    #findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,False)
 
     #Now see if we already have folders for the ones that wasn't found
     findExistingData(out_csv_file,save_dir,out_csv_file)
@@ -136,10 +137,11 @@ def findExistingData(csv_file,save_dir,output_file):
         folder = f"{r['PartNumber']}-{r['RunNumber']}-N00{r['BoardNumber']}-A{r['ArrayNumber']}-{r['Class']}"
         save_path = save_dir+folder
         #Now see if the dict is a part of the   path
-        print(save_path)
         if not os.path.exists(save_path):
+           print(save_path)
            continue
         else:
+            print("YUP")
             dt.loc[index,first_col] = folder  
             
     #Save the csv files one last time
