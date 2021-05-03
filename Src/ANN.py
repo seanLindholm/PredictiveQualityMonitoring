@@ -140,7 +140,7 @@ class FCNN(nn.Module):
 
             print(f"\r{e+1}/{epochs}",end='\r')
             # --- return acc after trainig --- #
-        return loss_train
+        return acc_test
 
 
     def plot(self):
@@ -253,7 +253,6 @@ class AE(nn.Module):
             #Loss is with same input picture after decoding (Reconstruction loss)
             out = self.loss(pred,Variable(X_test).to(device))
             loss_train = out.data.cpu().numpy()
-
             
             
 

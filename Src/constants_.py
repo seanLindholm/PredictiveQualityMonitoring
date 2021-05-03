@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 from sklearn.ensemble import IsolationForest as isoF
 from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
 #path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
 #file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
 #data_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\"
@@ -12,10 +14,12 @@ file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitor
 data_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\"
 dummy_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\dummy_data\\"
 failed = file_path + "failed_ext.csv"
+failed_ext_norm = file_path + "failed_ext_Norm.csv"
 failed_NoNaN = file_path + "failed_NoNaN.csv"
 failed_DEA = file_path + "failed_withDEAScore.csv"
 
 approved = file_path + "approved_ext.csv"
+approved_ext_norm = file_path + "approved_ext_Norm.csv"
 approved_NoNaN = file_path + "approved_NoNaN.csv"
 approved_DEA = file_path + "approved_withDEAScore.csv"
 
@@ -110,3 +114,65 @@ def lowestComponancePCA(dt,explain_var,min_comp=1):
             if(sum(pca.explained_variance_ratio_) >= explain_var):
                 return pca
         return pca
+
+
+def loadImageData(load_name):
+    data = np.load(load_name+".npz")
+    for i in data:
+        return np.array(data[i])
+
+def plot(loss,acc):
+        plt.figure('Loss and accuracy')
+        plt.plot(loss)
+        plt.plot(acc)
+      
+        plt.legend(["loss","acc"])
+
+        plt.figure('Loss')
+        plt.plot(loss)
+        plt.legend(["loss"])
+        
+        plt.figure('Accuracy')
+        plt.plot(acc)
+        plt.legend(["acc"])
+     
+        plt.show(block=False)
+        input("Press enter to close all windows")
+        plt.close('all')
+
+
+def scrampleAndSplitData(data,df,df_a,WithDEA = False):
+    #80 % train 20% test
+    split = int(df.shape[0]*0.8)
+    #random indecies
+    f_data_indx = np.random.permutation(df.shape[0])
+
+    #50/50 failed and approved
+    data_f = data[:df.shape[0],:][f_data_indx]
+    if (WithDEA):
+        y_f = df['DEA'].to_numpy().reshape(-1,1)[f_data_indx]
+    else:
+        y_f = np.zeros(df.shape[0]).reshape(-1,1)
+
+    a_data_indx = np.random.permutation(df_a.shape[0])[:df.shape[0]]
+    data_a = (data[df.shape[0]:,:])[a_data_indx]
+    if (WithDEA):
+        y_a = (df_a['DEA'].to_numpy())[a_data_indx].reshape(-1,1)
+    else:
+        y_a = np.ones(df.shape[0]).reshape(-1,1)
+
+    #Build data train and test
+    X_train = np.append(data_f[:split,:],data_a[:split,:],axis=0)
+    X_test = np.append(data_f[split:,:],data_a[split:,:],axis=0)
+    y_train = np.append(y_f[:split,:],y_a[:split,:],axis=0)
+    y_test = np.append(y_f[split:,:],y_a[split:,:],axis=0)
+
+    #Shuffle test and train
+    train_shuffle = np.random.permutation(X_train.shape[0])
+    test_shuffle = np.random.permutation(X_test.shape[0])
+    X_train = X_train[train_shuffle].astype('float32') 
+    X_test = X_test[test_shuffle].astype('float32') 
+    y_train = y_train[train_shuffle].astype('float32') 
+    y_test = y_test[test_shuffle].astype('float32') 
+
+    return X_train,X_test,y_train,y_test

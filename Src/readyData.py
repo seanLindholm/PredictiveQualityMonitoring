@@ -10,12 +10,20 @@ from constants_ import *
 
 
 def main():
+    #normalizeData()
     #makeDEAReady("dea_mixed.csv")
     # Has to be done in stages since the dea calcuations are done in matlab
     appendDEAData()
 
+def normalizeData():
+    df_fail = getData(failed); df_approved = getData(approved)
+    df_fail.loc[:,:][function_test_col_transformed] = normalize(df_fail[function_test_col_transformed].to_numpy())
+    df_approved.loc[:,:][function_test_col_transformed] = normalize(df_approved[function_test_col_transformed].to_numpy())
+    saveDF(df_fail,"failed_ext_Norm.csv")
+    saveDF(df_approved,"approved_ext_Norm.csv")
+
 def appendDEAData():
-    df_fail = getData(failed_NoNaN); df_approved = getData(approved_NoNaN)
+    df_fail = getData(failed); df_approved = getData(approved)
     dea_eff = getData(data_path + "eff_mixed.csv")
     f_len = len(df_fail)
     a_len = len(df_approved)
@@ -30,8 +38,8 @@ def appendDEAData():
 
 def makeDEAReady(save_name):
     # Get the df with the columns of interest
-    df = getData(failed_NoNaN)[function_test_col_transformed]
-    df_2 = getData(approved_NoNaN)[function_test_col_transformed]
+    df = getData(failed)[function_test_col_transformed]
+    df_2 = getData(approved)[function_test_col_transformed]
     df = df.append(df_2)
     saveDF(df,save_name)
 

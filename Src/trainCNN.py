@@ -4,38 +4,10 @@ import cv2
 import numpy as np 
 from constants_ import *
 import matplotlib.pyplot as plt
+from imgProccessing import extractMidSection as ems
 
 
 
-
-def getData(data_path):
-    return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',encoding='latin_1',na_values='')
-
-
-
-def loadImageData(load_name):
-    data = np.load(load_name+".npz")
-    for i in data:
-        return np.array(data[i])
-
-def plot(loss,acc):
-        plt.figure('Loss and accuracy')
-        plt.plot(loss)
-        plt.plot(acc)
-      
-        plt.legend(["loss","acc"])
-
-        plt.figure('Loss')
-        plt.plot(loss)
-        plt.legend(["loss"])
-        
-        plt.figure('Accuracy')
-        plt.plot(acc)
-        plt.legend(["acc"])
-     
-        plt.show(block=False)
-        input("Press enter to close all windows")
-        plt.close('all')
 
 def test():
     X_train = []
@@ -105,7 +77,7 @@ def main(SaveImgData=False):
 
     #Build data train and test
     X_train = np.append(data_f[:split,:],data_a[:split,:],axis=0)
-    X_test = np.append(data_f[split:,:],data_f[split:,:],axis=0)
+    X_test = np.append(data_f[split:,:],data_a[split:,:],axis=0)
     y_train = np.append(y_f[:split,:],y_a[:split,:],axis=0)
     y_test = np.append(y_f[split:,:],y_a[split:,:],axis=0)
 
@@ -119,13 +91,13 @@ def main(SaveImgData=False):
 
 
     big_picture = False
-    net = CNN(1,big_picture=big_picture,classPrediction=True,early_stopping=False).to(device)
+    net = CNN(1,big_picture=big_picture,classPrediction=True,early_stopping=True).to(device)
     torch.save(net.state_dict(), path+"YM_in_inner")
 
     hist_loss = np.array([])
     hist_acc = np.array([])
 
-  
+    
     net.train(X_train,X_test,y_train,y_test,epochs=2000)
     hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
     hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)

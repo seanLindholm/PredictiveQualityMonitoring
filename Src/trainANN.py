@@ -6,37 +6,6 @@ from constants_ import *
 import matplotlib.pyplot as plt
 
 
-
-
-def getData(data_path):
-    return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',encoding='latin_1',na_values='')
-
-
-
-def loadImageData(load_name):
-    data = np.load(load_name+".npz")
-    for i in data:
-        return np.array(data[i])
-
-def plot(loss,acc):
-        plt.figure('Loss and accuracy')
-        plt.plot(loss)
-        plt.plot(acc)
-      
-        plt.legend(["loss","acc"])
-
-        plt.figure('Loss')
-        plt.plot(loss)
-        plt.legend(["loss"])
-        
-        plt.figure('Accuracy')
-        plt.plot(acc)
-        plt.legend(["acc"])
-     
-        plt.show(block=False)
-        input("Press enter to close all windows")
-        plt.close('all')
-
 def test():
     X_train = []
     for i in range(1,4):
@@ -53,21 +22,7 @@ def test():
     for img,expect in zip(X_train,X_test):
         print(net.forward(img.reshape(1,1,256,256)),expect)
 
-def main(SaveImgData=False):
-   
-    #The DEA score data
-    df = getData(failed)
-    df_a = getData(approved)
-    #y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
-    y = np.append(np.zeros(df.shape[0]),np.ones(getData(approved_DEA).shape[0])).reshape(-1,1).astype('float32')
-
-    data = normalize(df.append(df_a)[fcnn_data].to_numpy())
-    # pca = lowestComponancePCA(data,0.95)
-    # print(pca.explained_variance_ratio_.sum())
-    # print(pca.explained_variance_)
-    
-    # data = pca.fit_transform(data)
-    
+def scrampleAndSplitData(data,df,df_a):
     #80 % train 20% test
     split = int(df.shape[0]*0.8)
     #random indecies
@@ -85,7 +40,7 @@ def main(SaveImgData=False):
 
     #Build data train and test
     X_train = np.append(data_f[:split,:],data_a[:split,:],axis=0)
-    X_test = np.append(data_f[split:,:],data_f[split:,:],axis=0)
+    X_test = np.append(data_f[split:,:],data_a[split:,:],axis=0)
     y_train = np.append(y_f[:split,:],y_a[:split,:],axis=0)
     y_test = np.append(y_f[split:,:],y_a[split:,:],axis=0)
 
@@ -97,23 +52,51 @@ def main(SaveImgData=False):
     y_train = y_train[train_shuffle].astype('float32') 
     y_test = y_test[test_shuffle].astype('float32') 
 
+    return X_train,X_test,y_train,y_test
+
+def main(SaveImgData=False):
+   
+    #The DEA score data
+    df = getData(failed)
+    df_a = getData(approved)
+    #y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
+
+    data = normalize(df.append(df_a)[fcnn_data].to_numpy())
+    # pca = lowestComponancePCA(data,0.95)
+    # print(pca.explained_variance_ratio_.sum())
+    # print(pca.explained_variance_)
+    
+    # data = pca.fit_transform(data)
+
+    X_train,X_test,y_train,y_test= scrampleAndSplitData(data,df,df_a)
     one_counter=0
     zero_counter=0
+    max_acc = 0
+    acc_avg = 0
+    for _ in range(10):
+        X_train,X_test,y_train,y_test= scrampleAndSplitData(data,df,df_a)
+        net = FCNN(data.shape[1],early_stopping=False,class_prediction=True).to(device)
+
+        hist_loss = np.array([])
+        hist_acc = np.array([])
+
+        acc = net.train_(X_train,X_test,y_train,y_test,epochs=200)
+        acc_avg += acc
+        if (acc > max_acc): 
+            max_acc = acc
+            torch.save(net.state_dict(), path+"Model_ScanDATA")
+        hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
+        hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
+    print(f"After 10 runs of 200 epochs we get a max accuracy of {max_acc*100} with an average of {(acc_avg/10)*100}")
     
-    
+    #test other methods
+    # plsr - data reduction and func estimation - DEA
+    # add features from images - mid section
+
+
     net = FCNN(data.shape[1],early_stopping=False,class_prediction=True).to(device)
-
-    hist_loss = np.array([])
-    hist_acc = np.array([])
-
-   
-    net.train_(X_train,X_test,y_train,y_test,epochs=200)
-    hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
-    hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
-    torch.save(net.state_dict(), path+"Model_ScanDATA")
-    
-
-    plot(hist_loss,hist_acc)
+    net.load_state_dict(torch.load(path+"Model_ScanDATA"))
+    net.eval()
     corr = 0
     fail = 0
     for ind in range(X_test.shape[0]):

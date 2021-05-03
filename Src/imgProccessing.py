@@ -116,10 +116,13 @@ def detectSensor(img):
         cv2.circle(gray,(i[0],i[1]),2,(0,0,255),3)
 
 
-def extractMidSection(img):
-    gray = img
-    if(img.shape[2] > 0):
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def extractMidSection(gray):
+    # Signal processing - 
+    # Fue transform 
+    # welch method
+    
+    # Make an average reference section for x and y for the three scans
+    # one feature could be number of peaks from the subtracted images (removes systematic noise) 
     mid_x = int(gray.shape[0]/2)
     mid_y = int(gray.shape[1]/2)
 
@@ -151,7 +154,7 @@ def extractMidSection(img):
     axs[1,1].set_title("Sensor")
 
 
-    plt.show()
+    
 
 def invertGrayscale():
     df = getData(failed_NoNaN)
@@ -166,4 +169,23 @@ def invertGrayscale():
         cv2.imshow('image_org',img)
         cv2.waitKey(0)
 
+img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_RAW.jpg")
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+extractMidSection(gray)
+img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_CA.jpg")
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+extractMidSection(gray)
+img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_YM.jpg")
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+extractMidSection(gray)
 
+img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\both_crop_RAW.jpg")
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+extractMidSection(gray)
+img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\both_crop_CA.jpg")
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+extractMidSection(gray)
+img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\both_crop_YM.jpg")
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+extractMidSection(gray)
+plt.show()

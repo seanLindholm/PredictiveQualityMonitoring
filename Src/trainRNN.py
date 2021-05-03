@@ -5,46 +5,6 @@ import numpy as np
 from constants_ import *
 import matplotlib.pyplot as plt
 
-def loadImageData(load_name):
-    data = np.load(load_name+".npz")
-    for i in data:
-        return np.array(data[i])
-
-def plot(loss,acc):
-        plt.figure('Loss and accuracy')
-        plt.plot(loss)
-        plt.plot(acc)
-      
-        plt.legend(["loss","acc"])
-
-        plt.figure('Loss')
-        plt.plot(loss)
-        plt.legend(["loss"])
-        
-        plt.figure('Accuracy')
-        plt.plot(acc)
-        plt.legend(["acc"])
-     
-        plt.show(block=False)
-        input("Press enter to close all windows")
-        plt.close('all')
-
-def test():
-    X_train = []
-    for i in range(1,4):
-        for im in ["_025_jpg.jpg","_05_jpg.jpg","_085_jpg.jpg"]:
-            img = cv2.cvtColor(cv2.imread(dummy_path+"images\\"+str(i)+im), cv2.COLOR_BGR2GRAY)
-            img = img.astype('float32');img /= 255; img = img.reshape(1,img.shape[0],img.shape[1])
-            X_train.append(img)
-    
-    X_test = np.array([0.25,0.5,0.85,0.25,0.5,0.85,0.25,0.5,0.85],np.single).reshape(-1,1)
-    X_train = np.array(X_train,np.single)
-    net = CNN(1).to(device)
-    net.train(X_train,X_train,X_test,X_test,epochs=1000)
-    net.plot()
-    for img,expect in zip(X_train,X_test):
-        print(net.forward(img.reshape(1,1,256,256)),expect)
-
 def convertImg(img):
     mid_x = int(img.shape[0]/2)
     mid_y = int(img.shape[1]/2)
@@ -119,6 +79,9 @@ def main(SaveImgData=False):
 
     plot(hist_loss,hist_acc)
 
+    # Signal processing - 
+    # Fue transform 
+    # welsh transform
 
     for ind in np.random.permutation(X_test_img.shape[0])[:5]:
         dea,_,_=net.forward(X_test[ind].reshape(1,1,-1),net.hx,net.hy)
