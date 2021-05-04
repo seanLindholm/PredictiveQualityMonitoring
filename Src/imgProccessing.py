@@ -211,6 +211,22 @@ def generateProfile():
         np.savez(data_path+img_+"_x_.npz",x_section.mean(axis=0))
         np.savez(data_path+img_+"_y_.npz",y_section.mean(axis=0))
 
+def getNumberOfPeaksThreshYM(df,threshold=35):
+    load_name = ["both_crop_RAW","both_crop_CA","both_crop_YM"]
+    gray = []
+    img = cv2.imread(path + img_test + "\\" + name + ".jpg")
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    data_x = np.load(data_path+"both_crop_YM_x_.npz")
+    for i in data_x:
+            profile_x = data_x[i]
+        
+    x_test,y_test = extractMidSection(gray,RET=True)
+    x_test = abs(x_test.astype('float') - profile_x)
+    x_test[x_test<35] = 0
+    y_test[y_test<35] = 0
+    x_peaks, _ = find_peaks(x_test)
+    y_peaks, _ = find_peaks(y_test)
 
 
 def getNumberOfPeaksThresh(threshold=35):
@@ -219,7 +235,10 @@ def getNumberOfPeaksThresh(threshold=35):
     load_name = ["both_crop_RAW","both_crop_CA","both_crop_YM"]
     gray = []
     for name in load_name:
-
+        peaks_x = []
+        peaks_y = []
+        max_x = []
+        max_y = []
         # for the approved ones
         acc_peaks_x = 0
         acc_peaks_y = 0
@@ -251,21 +270,30 @@ def getNumberOfPeaksThresh(threshold=35):
             y_test[y_test<35] = 0
             x_peaks, _ = find_peaks(x_test)
             y_peaks, _ = find_peaks(y_test)
+            peaks_x.append(x_peaks)
+            peaks_y.append(y_peaks)
             acc_peaks_x += len(x_peaks)
             acc_peaks_y += len(y_peaks)
             if x_peaks.size > 0:
+                max_x.append(np.max(x_peaks))
                 acc_max_x += np.max(x_peaks)
             if y_peaks.size > 0:
+                max_y.append(np.max(y_peaks))
                 acc_max_y += np.max(y_peaks)
         
-        print(f"Average number of peaks for x: {acc_peaks_x/len(list_app)} and y: {acc_peaks_y/len(list_app)} for Approved - {name}")
-        print(f"Average number of max peak x: {acc_max_x/len(list_app)} and max peak y: {acc_max_y/len(list_app)} for Approved - {name}")
+        print(f"Average number of peaks for x: {acc_peaks_x/len(list_app):.2f} and y: {acc_peaks_y/len(list_app):.2f}, std x: {np.std(np.array(x_peaks)):.2f}, std y: {np.std(np.array(y_peaks)):.2f} for Approved - {name}")
+        print(f"Average number of max peak x: {acc_max_x/len(list_app):.2f} and max peak y: {acc_max_y/len(list_app):.2f}, std x: {np.std(np.array(max_x)):.2f}, std y: {np.std(np.array(max_y)):.2f} for Approved - {name}")
+
 
         # for the failed ones
         acc_peaks_x = 0
         acc_peaks_y = 0
         acc_max_x = 0
         acc_max_y = 0
+        peaks_x = []
+        peaks_y = []
+        max_x = []
+        max_y = []
         for img_test in list_fail:
             img = cv2.imread(path + img_test + "\\" + name + ".jpg")
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -292,16 +320,20 @@ def getNumberOfPeaksThresh(threshold=35):
             y_test[y_test<35] = 0
             x_peaks, _ = find_peaks(x_test)
             y_peaks, _ = find_peaks(y_test)
+            peaks_x.append(x_peaks)
+            peaks_y.append(y_peaks)
             acc_peaks_x += len(x_peaks)
             acc_peaks_y += len(y_peaks)
             if x_peaks.size > 0:
+                max_x.append(np.max(x_peaks))
                 acc_max_x += np.max(x_peaks)
             if y_peaks.size > 0:
+                max_y.append(np.max(y_peaks))
                 acc_max_y += np.max(y_peaks)
 
         
-        print(f"Average number of peaks for x: {acc_peaks_x/len(list_fail)} and y: {acc_peaks_y/len(list_fail)} for Failed - {name}")
-        print(f"Average number of max peak x: {acc_max_x/len(list_fail)} and max peak y: {acc_max_y/len(list_fail)} for Failed - {name}")
+        print(f"Average number of peaks for x: {acc_peaks_x/len(list_fail):.2f} and y: {acc_peaks_y/len(list_fail):.2f}, std x: {np.std(np.array(x_peaks)):.2f}, std y: {np.std(np.array(y_peaks)):.2f} for Failed - {name}")
+        print(f"Average number of max peak x: {acc_max_x/len(list_fail):.2f} and max peak y: {acc_max_y/len(list_fail):.2f}, std x: {np.std(np.array(max_x)):.2f}, std y: {np.std(np.array(max_y)):.2f} for Failed - {name}")
 
         print()
 
@@ -338,6 +370,8 @@ def plotProfile(img_test = None):
             y_test[y_test<35] = 0
             x_peaks, _ = find_peaks(x_test)
             y_peaks, _ = find_peaks(y_test)
+         
+
 
         
         if img_test is None:
@@ -374,11 +408,11 @@ def invertGrayscale():
 
 
 
-#generateProfile()
-#getNumberOfPeaksThresh()
-plotProfile()
+generateProfile()
+getNumberOfPeaksThresh()
+#plotProfile()
 #plotProfile(img_test=path+"932-029-R29158-N002-A13-Approved\\")
-plt.show()
+#plt.show()
 
 # img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_RAW.jpg")
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
