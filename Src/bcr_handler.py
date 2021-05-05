@@ -25,28 +25,38 @@ def extendNoNaNData(file,ext_file):
         df = df.iloc[0:0]
         df.to_csv(file,encoding='latin_1',index=False)
     
+def listDicts(path):
+        for dict_ in os.listdir(path):
+            yield dict_
 
-def BcrToJpg(data_file):
-    df = getData(data_file)
+def BcrToJpg():
+    #df = getData(data_file)
     counter = 1
-    for folder in df['bcr_dir']:     
-        n_f = openAndCloseDirectory(path + folder,counter)
-        if(n_f > 3): print(f"Jpg already saved for {folder}");counter+=1;continue
-        print(f"Folder number: {counter}")
-        for i in range(n_f):
+    for folder in listDicts(path):
+        if(folder != "Model_ScanDATA"):
+            n_f = openAndCloseDirectory(path + folder,counter)
+            if(n_f > 3): print(f"Jpg already saved for {folder}");counter+=1;continue
+            print(f"Folder number: {counter} - {folder}")
+            for i in range(n_f):
+                time.sleep(1)
+                NavigateBCR(not i)
+                time.sleep(3)
+                saveToJpg()
+                time.sleep(1)
+                closeBCRfile()
             time.sleep(1)
-            NavigateBCR(not i)
-            time.sleep(3)
-            saveToJpg()
-            time.sleep(1)
-            closeBCRfile()
-        time.sleep(1)
-        closeFolder()
-        counter+=1
+            closeFolder()
+            counter+=1
             
-    
+def cleanOutAllJpg():
+    for folder in listDicts(path):
+        for file_ in listDicts(path + folder):
+            if ".jpg" in file_:
+                os.system(f"del /f {path + folder}\\{file_}")
+
 def removeDublicates():
-    #This function removes dupilcates and the folders that was wrongly labelled good and bad
+    #This functi
+    # on removes dupilcates and the folders that was wrongly labelled good and bad
     df_f = getData(failed_NoNaN)
     df_a = getData(approved_NoNaN)
     folder_del = []
@@ -124,9 +134,10 @@ def main():
     #saveDF(df,failed_NoNaN)
     #df = removeNANrows(getData(approved),"bcr_dir")
     #saveDF(df,approved_NoNaN)
-    #BcrToJpg(failed_NoNaN)
+    #cleanOutAllJpg()
+    BcrToJpg()
     #BcrToJpg(approved_NoNaN)
-    #CreateAndSaveImgs()
+    CreateAndSaveImgs()
     #print("Removing odd sized imgaes")
     #removeOddSizeImages()
     
@@ -143,9 +154,9 @@ def main():
         
     
 
-def openAndCloseDirectory(path,counter):
+def openAndCloseDirectory(path,counter,doIt=False):
     size = len(os.listdir(path))
-    if (size <= 3):
+    if (size <= 3 or doIt):
         os.startfile(path)
     return size
 

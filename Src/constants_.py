@@ -31,7 +31,7 @@ function_test_col_transformed = ["2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 m
                                  "Sensitivity [pA/µM]","t on 10/5 mM glu/lac [s]","Lav O2 - Høj O2"]
 
 fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_void_cav","CA_cav_depth","Ca_void_mem","CA_overlap_min","CA_overlap_max","YM_void_mem"]
-#fcnn_data = ["CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_cav_depth","CA_overlap_min","CA_overlap_max"]
+#fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_cav_depth","CA_overlap_min","CA_overlap_max"]
 
 def saveDF(df,name):
     df.to_csv(name,index=False)
@@ -141,7 +141,12 @@ def plot(loss,acc):
         plt.close('all')
 
 
-def scrampleAndSplitData(data,df,df_a,WithDEA = False):
+def scrampleAndSplitData(df,df_a,WithDEA = False,out_parameters = []):
+    if WithDEA:
+        out_parameters = []
+    elif out_parameters != []:
+        WithDEA = False
+    data = normalize(df.append(df_a)[fcnn_data].to_numpy())
     #80 % train 20% test
     split = int(df.shape[0]*0.8)
     #random indecies
@@ -151,6 +156,8 @@ def scrampleAndSplitData(data,df,df_a,WithDEA = False):
     data_f = data[:df.shape[0],:][f_data_indx]
     if (WithDEA):
         y_f = df['DEA'].to_numpy().reshape(-1,1)[f_data_indx]
+    elif out_parameters != []:
+        y_f = normalize(df[out_parameters].to_numpy().reshape(-1,1)[f_data_indx])
     else:
         y_f = np.zeros(df.shape[0]).reshape(-1,1)
 
@@ -158,6 +165,8 @@ def scrampleAndSplitData(data,df,df_a,WithDEA = False):
     data_a = (data[df.shape[0]:,:])[a_data_indx]
     if (WithDEA):
         y_a = (df_a['DEA'].to_numpy())[a_data_indx].reshape(-1,1)
+    elif out_parameters != []:
+        y_a = normalize((df_a[out_parameters].to_numpy())[a_data_indx].reshape(-1,1))
     else:
         y_a = np.ones(df.shape[0]).reshape(-1,1)
 

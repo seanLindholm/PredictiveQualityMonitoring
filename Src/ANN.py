@@ -82,6 +82,9 @@ class FCNN(nn.Module):
                 count += 1
         return count
 
+    def calcRecClassPred(self,pred,test):
+        return sum(np.square(test-pred))
+
     def train_(self,X_train,X_test,y_train,y_test,epochs=10):
         X_train = torch.tensor(X_train) if not torch.is_tensor(X_train) else X_train
         X_test = torch.tensor(X_test) if not torch.is_tensor(X_test) else X_test
@@ -118,8 +121,11 @@ class FCNN(nn.Module):
                 #Loss is with same input picture after decoding (Reconstruction loss)
                 out = self.loss(pred,Variable(y_tst).to(device))
 
-                acc_test += self.calcAccClassPred(pred.data.cpu(),y_tst)
-                #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
+                if (self.class_prediction):
+                    acc_test += self.calcAccClassPred(pred.data.cpu(),y_tst)
+                else:
+                    acc_test += self.calcRecClassPred(pred.data.cpu(),y_tst)
+                    #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
 
             acc_test /= X_test.shape[0]
             loss_train /= X_train.shape[0]

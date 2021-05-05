@@ -74,8 +74,23 @@ def find_directory(dirName, search_path):
             if dirName in dir:
                 return os.path.join(root, dirName)
     return ""
+def createDiffernece():
+    counter = 1
+    for folder in listDicts(path):
+        if (folder != "Model_ScanDATA"):
+            print(f"Folder number {counter} - {folder}")
+            pic_raw = path+folder+"\\RAW.jpg"
+            pic_raw = cv2.imread(path+folder+"\\RAW.jpg")
+            pic_ca = abs(cv2.imread(path+folder+"\\CA.jpg") - pic_raw)
+            pic_ym = abs(abs((cv2.imread(path+folder+"\\YM.jpg") - pic_raw)) - pic_ca)
+            cv2.imwrite(path+folder+"\\CA_diff.jpg",pic_ca)
+            cv2.imwrite(path+folder+"\\YM_diff.jpg",pic_ym)
+        counter += 1
+        
+               
 
 def CreateAndSaveImgs():
+    createDiffernece()
     list_picName = ["RAW.jpg","YM.jpg","CA.jpg"]
     list_function = [innerCircle,outerCircle,bothCircles,inner_innerCircle]
     list_fileName = ["inner_crop","outter_crop","both_crop","in_inner_crop"]
@@ -407,12 +422,12 @@ def invertGrayscale():
 
 
 
-
-generateProfile()
-getNumberOfPeaksThresh()
-#plotProfile()
-#plotProfile(img_test=path+"932-029-R29158-N002-A13-Approved\\")
-#plt.show()
+# CreateAndSaveImgs()
+# #generateProfile()
+# #getNumberOfPeaksThresh()
+# plotProfile()
+# plotProfile(img_test=path+"932-029-R28424-N003-A5-Approved\\")
+# plt.show()
 
 # img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_RAW.jpg")
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -423,7 +438,7 @@ getNumberOfPeaksThresh()
 # img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_YM.jpg")
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 # extractMidSection(gray)
-
+# plt.show()
 # img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\both_crop_RAW.jpg")
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 # extractMidSection(gray)

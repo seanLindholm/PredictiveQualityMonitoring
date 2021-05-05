@@ -138,10 +138,8 @@ def findExistingData(csv_file,save_dir,output_file):
         save_path = save_dir+folder
         #Now see if the dict is a part of the   path
         if not os.path.exists(save_path):
-           print(save_path)
            continue
         else:
-            print("YUP")
             dt.loc[index,first_col] = folder  
             
     #Save the csv files one last time
