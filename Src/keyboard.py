@@ -27,7 +27,7 @@ VK_DOWN = 0x28
 VK_UP = 0x26
 VK_RIGHT = 0x27
 VK_F4 = 0x73
-
+VK_F5 = 0x74
 VK_LCONTROL = 0xA2
 VK_LSHIFT = 0xA0
 VK_RETURN = 0x0D
@@ -146,6 +146,7 @@ def saveToJpg():
     time.sleep(1)
     singlePress(VK_RETURN)
     time.sleep(1)
+    
 
 def closeBCRfile():
     #close down
@@ -157,6 +158,8 @@ def closeBCRfile():
     PressKey(VK_F4)
     ReleaseKey(VK_MENU)
     ReleaseKey(VK_F4)
+    time.sleep(1)
+    singlePress(VK_F5)
 
 def closeFolder():
     #close down

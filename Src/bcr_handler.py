@@ -130,7 +130,7 @@ def main():
     #extendNoNaNData(approved,approved_NoNaN)
     #removeDublicates()
     
-    df = removeNANrows(getData(failed),"bcr_dir")
+    #df = removeNANrows(getData(failed),"bcr_dir")
     #saveDF(df,failed_NoNaN)
     #df = removeNANrows(getData(approved),"bcr_dir")
     #saveDF(df,approved_NoNaN)
@@ -146,7 +146,7 @@ def main():
     #statisticalAnalysis(approved_NoNaN,function_test_col_transformed)
     #statisticalAnalysis(failed,fcnn_data)
     #statisticalAnalysis(approved,fcnn_data)
-
+    
     #  
 
 
