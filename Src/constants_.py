@@ -5,13 +5,13 @@ from sklearn.ensemble import IsolationForest as isoF
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-# path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
-# file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
-# data_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\"
+path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+file_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\"
+data_path = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\"
 
-path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
-file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
-data_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\"
+# path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\"
+# file_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Src\\"
+# data_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\"
 dummy_path = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\dummy_data\\"
 failed = file_path + "failed_ext.csv"
 failed_ext_norm = file_path + "failed_ext_Norm.csv"
@@ -141,12 +141,15 @@ def plot(loss,acc):
         plt.close('all')
 
 
-def scrampleAndSplitData(df,df_a,WithDEA = False,out_parameters = []):
+def scrampleAndSplitData(df,df_a,ImageData=False,numpy_data_name="",WithDEA = False,out_parameters = []):
     if WithDEA:
         out_parameters = []
     elif out_parameters != []:
         WithDEA = False
-    data = normalize(df.append(df_a)[fcnn_data].to_numpy())
+    if ImageData:
+        data = loadImageData(numpy_data_name)
+    else:
+        data = normalize(df.append(df_a)[fcnn_data].to_numpy())
     #80 % train 20% test
     split = int(df.shape[0]*0.8)
     #random indecies

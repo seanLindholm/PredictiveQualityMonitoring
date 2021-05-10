@@ -11,19 +11,7 @@ failed_NoNaN = file_path + "failed_noNaN.csv"
 approved_NoNaN = file_path + "approved_noNaN.csv"
 
 
-def extendNoNaNData(file,ext_file):
-    df = getData(file)
-    print(df.columns)
-    df = removeNANrows(df,'bcr_dir')
-    if df.empty:
-        print("Datafile is empty, aboard..")
-        return
-    else:
-        df2 = getData(ext_file)
-        df = df.append(df2,ignore_index=True,sort=False)
-        df.to_csv(ext_file,encoding='latin_1',index=False)
-        df = df.iloc[0:0]
-        df.to_csv(file,encoding='latin_1',index=False)
+
     
 def listDicts(path):
         for dict_ in os.listdir(path):
@@ -81,65 +69,44 @@ def removeOddSizeImages():
     #This function removes any images that isn't 256x256 (for the inner cicrle)
     #Or 482x512 for both/outter circle
     #Usely happens with the scanner being a bit off center
-    df_f = getData(failed_NoNaN)
-    df_a = getData(approved_NoNaN)
     folder_del = []
-    df_f_del = []
-    df_a_del = []
-    for index,r in df_f.iterrows():
+    next_folder = False
+    for folder in listDicts(path):
         for file_ in ["outter_crop_RAW","both_crop_RAW","outter_crop_CA","both_crop_CA","outter_crop_YM","both_crop_YM","inner_crop_RAW","inner_crop_CA","inner_crop_YM"]:
-            folder = r['bcr_dir']
             p = path + folder
-            img = cv2.cvtColor(cv2.imread(p+"\\"+ file_+".jpg"), cv2.COLOR_BGR2GRAY)
-            print(p+"\\"+ file_+".jpg")
+            #print(p+"\\"+ file_+".jpg")
             try:
                 img = cv2.cvtColor(cv2.imread(p+"\\"+ file_+".jpg"), cv2.COLOR_BGR2GRAY)
-                if (img.shape[0] == 256 or img.shape[0] == 482):
+                if(file_[-3] != "R"):
+                    img2 = cv2.cvtColor(cv2.imread(p+"\\"+ file_+"_diff.jpg"), cv2.COLOR_BGR2GRAY)
+                else:
+                    img2 = img
+                if ((img.shape[0] == 256 or img.shape[0] == 482) and (img2.shape[0] == 256 or img2.shape[0] == 482) ):
                     continue
                 else:
-                    df_f_del.append(index)
-                    folder_del.append(r['bcr_dir'])
+                    folder_del.append(folder)
                     break
-            except:
-                df_f_del.append(index)
-
-    for index,r in df_a.iterrows():
-        for file_ in ["outter_crop_RAW","both_crop_RAW","outter_crop_CA","both_crop_CA","outter_crop_YM","both_crop_YM","inner_crop_RAW","inner_crop_CA","inner_crop_YM"]:
-            folder = r['bcr_dir']
-            p = path + folder
-            try:
-                img = cv2.cvtColor(cv2.imread(p+"\\"+ file_+".jpg"), cv2.COLOR_BGR2GRAY)
-                if (img.shape[0] == 256 or img.shape[0] == 482):
-                    continue
-                else:
-                    df_a_del.append(index)
-                    folder_del.append(r['bcr_dir'])
-                    break
-            except:
-                df_a_del.append(index)
-
-    df_f.drop(df_f_del,inplace=True)
-    df_a.drop(df_a_del,inplace=True)
-    saveDF(df_f,failed_NoNaN)
-    saveDF(df_a,approved_NoNaN)
+            except Exception:
+                folder_del.append(folder)
     for f in folder_del:
         os.system("rmdir "+path+f + " /s /q")
 
 def main():
-    #extendNoNaNData(failed,failed_NoNaN)
-    #extendNoNaNData(approved,approved_NoNaN)
-    #removeDublicates()
+    removeDublicates()
     
     #df = removeNANrows(getData(failed),"bcr_dir")
     #saveDF(df,failed_NoNaN)
     #df = removeNANrows(getData(approved),"bcr_dir")
     #saveDF(df,approved_NoNaN)
     #cleanOutAllJpg()
+    outlierRemoval(failed)
+    outlierRemoval(approved)
     BcrToJpg()
-    #BcrToJpg(approved_NoNaN)
-    CreateAndSaveImgs()
+    #CreateAndSaveImgs(False)
+    #CreateAndSaveImgs(True)
+
     #print("Removing odd sized imgaes")
-    #removeOddSizeImages()
+    removeOddSizeImages()
     
     ##List variance,mean and std-deviation of the different parameters 
     #statisticalAnalysis(failed_NoNaN,function_test_col_transformed)

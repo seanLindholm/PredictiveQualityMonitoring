@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from constants_ import *
 from scipy.signal import find_peaks
+load_name = ["inner_crop_RAW","inner_crop_CA_diff","inner_crop_YM_diff"]
 
 
 def listDicts(path):
@@ -77,21 +78,22 @@ def find_directory(dirName, search_path):
 def createDiffernece():
     counter = 1
     for folder in listDicts(path):
-        if (folder != "Model_ScanDATA"):
-            print(f"Folder number {counter} - {folder}")
-            pic_raw = path+folder+"\\RAW.jpg"
-            pic_raw = cv2.imread(path+folder+"\\RAW.jpg")
-            pic_ca = abs(cv2.imread(path+folder+"\\CA.jpg") - pic_raw)
-            pic_ym = abs(abs((cv2.imread(path+folder+"\\YM.jpg") - pic_raw)) - pic_ca)
-            cv2.imwrite(path+folder+"\\CA_diff.jpg",pic_ca)
-            cv2.imwrite(path+folder+"\\YM_diff.jpg",pic_ym)
+        print(f"Folder number {counter} - {folder}")
+        pic_raw = cv2.imread(path+folder+"\\RAW.jpg")
+        pic_ca = abs(pic_raw - cv2.imread(path+folder+"\\CA.jpg") )
+        pic_ym = abs(pic_ca - abs(pic_raw - cv2.imread(path+folder+"\\YM.jpg") ) )
+        cv2.imwrite(path+folder+"\\CA_diff.jpg",pic_ca)
+        cv2.imwrite(path+folder+"\\YM_diff.jpg",pic_ym)
         counter += 1
         
                
 
-def CreateAndSaveImgs():
-    createDiffernece()
-    list_picName = ["RAW.jpg","YM.jpg","CA.jpg"]
+def CreateAndSaveImgs(withdiff = False):
+    if withdiff:
+        createDiffernece()
+        list_picName = ["RAW.jpg","YM_diff.jpg","CA_diff.jpg"]
+    else:
+        list_picName = ["RAW.jpg","YM.jpg","CA.jpg"]
     list_function = [innerCircle,outerCircle,bothCircles,inner_innerCircle]
     list_fileName = ["inner_crop","outter_crop","both_crop","in_inner_crop"]
     counter = 1
@@ -108,10 +110,10 @@ def CreateAndSaveImgs():
                     # cv2.imshow('Cropped image',image)
                     # cv2.waitKey(0)
                     cv2.imwrite(path+folder+"\\"+save_name+"_"+picName,image)
-                except:
+                except Exception:
                     print(f"Problem at: {pic}")
                
-        print(f"Done: {counter}")
+        print(f"Done: {counter} - {folder}")
         counter+=1
 
 def detectSensor(img):
@@ -207,10 +209,11 @@ def generateProfile():
     list_ = [ l.replace("-Failed", "-1") for l in os.listdir(path) ]
     del_item = []
    
-    for img_ in ["both_crop_RAW","both_crop_CA","both_crop_YM"]:
+    for img_ in load_name:
         x_section = np.array([[]])
         y_section = np.array([[]])
         for l in getApprovedInFolder():
+            print(f"{path}{l}\\{img_}.jpg")
             img = cv2.imread(f"{path}{l}\\{img_}.jpg")
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             x,y = extractMidSection(gray,RET=True)
@@ -227,7 +230,6 @@ def generateProfile():
         np.savez(data_path+img_+"_y_.npz",y_section.mean(axis=0))
 
 def getNumberOfPeaksThreshYM(df,threshold=35):
-    load_name = ["both_crop_RAW","both_crop_CA","both_crop_YM"]
     gray = []
     img = cv2.imread(path + img_test + "\\" + name + ".jpg")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -247,7 +249,6 @@ def getNumberOfPeaksThreshYM(df,threshold=35):
 def getNumberOfPeaksThresh(threshold=35):
     list_app = getApprovedInFolder()
     list_fail = getFailedInFolder()
-    load_name = ["both_crop_RAW","both_crop_CA","both_crop_YM"]
     gray = []
     for name in load_name:
         peaks_x = []
@@ -356,7 +357,6 @@ def getNumberOfPeaksThresh(threshold=35):
 
 
 def plotProfile(img_test = None):
-    load_name = ["both_crop_RAW","both_crop_CA","both_crop_YM"]
     gray = []
     for name in load_name:
         if img_test is not None:
@@ -422,30 +422,8 @@ def invertGrayscale():
 
 
 
-# CreateAndSaveImgs()
-# #generateProfile()
-# #getNumberOfPeaksThresh()
+# generateProfile()
+getNumberOfPeaksThresh()
 # plotProfile()
 # plotProfile(img_test=path+"932-029-R28424-N003-A5-Approved\\")
-# plt.show()
-
-# img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_RAW.jpg")
-# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# extractMidSection(gray)
-# img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_CA.jpg")
-# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# extractMidSection(gray)
-# img = cv2.imread(path+"932-029-R28411-N001-A5-Failed\\both_crop_YM.jpg")
-# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# extractMidSection(gray)
-# plt.show()
-# img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\both_crop_RAW.jpg")
-# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# extractMidSection(gray)
-# img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\both_crop_CA.jpg")
-# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# extractMidSection(gray)
-# img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\both_crop_YM.jpg")
-# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# extractMidSection(gray)
 # plt.show()
