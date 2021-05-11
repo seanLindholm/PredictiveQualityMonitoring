@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from datetime import datetime
-from constants_ import outlierRemoval
+from constants_ import outlierRemoval,path,data_path
 
 def main():
     
@@ -9,26 +9,24 @@ def main():
     #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Failed_w_glu_Transform_ext.csv"
     #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_failed.csv"
     #csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_failed.csv"
-    csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Failed_w_glu_Transform_ext.csv"
+    csv_file = data_path + "Failed_w_glu_Transform_ext.csv"
 
     out_csv_file = "failed_ext.csv"
-    #save_dir = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\" 
-    save_dir = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\bcr_files\\" 
-    
+    save_dir = path
     #First remove outliers
     #outlierRemoval(csv_file)
-    #findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,True)
+    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,True)
     findExistingData(out_csv_file,save_dir,out_csv_file)
     print("Next file!")
     
     #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Approved_w_glu_Transform_ext.csv"
     #csv_file = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_approved.csv"
-    csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Approved_w_glu_Transform_ext.csv"
+    csv_file = data_path + "Approved_w_glu_Transform_ext.csv"
     #csv_file = "C:\\Users\\swang\\Desktop\\Sean\\Speciale\\PredictiveQualityMonitoring\\Data\\Poor_func_approved.csv"
     out_csv_file = "approved_ext.csv"
     #First remove outliers
-    #outlierRemoval(csv_file)
-    #findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,False)
+    outlierRemoval(csv_file)
+    findAndCopyBCRFiles(csv_file,save_dir,out_csv_file,False)
 
     #Now see if we already have folders for the ones that wasn't found
     findExistingData(out_csv_file,save_dir,out_csv_file)
@@ -36,10 +34,10 @@ def main():
 
 
 def getData(data_path):
-    return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',encoding='latin_1')
+    return pd.read_csv(data_path,sep=r'\s*,\s*',engine='python',na_values='')
 
 
-def findAndCopyBCRFiles(csv_file,save_dir,output_file,IsFailed,save_counter=100):
+def findAndCopyBCRFiles(csv_file,save_dir,output_file,IsFailed,save_counter=50):
     date_csv = "C:\\Users\\SEALI\\OneDrive - Danaher\\Desktop\\Seans_opgaver\\Speciale\\PredictiveQualityMonitoring\\Src\\date_stoppers.csv"
 
     path_dir = "Y:\\4746 - Processdata\\7_3DSCAN\\ODIN\\"
@@ -113,16 +111,16 @@ def findAndCopyBCRFiles(csv_file,save_dir,output_file,IsFailed,save_counter=100)
         counter+=1
         if(counter == save_counter):
             print("Saved file so far")
-            dt.to_csv(output_file,index=False,encoding='latin-1')
+            dt.to_csv(output_file,index=False)
             counter = 0
     
     #Save the csv files one last time
-    dt.to_csv(output_file,index=False,encoding='latin-1')
+    dt.to_csv(output_file,index=False)
     if IsFailed:
         dt_date['failed_bcr_date'] = new_stop
     else:
         dt_date['approved_bcr_data'] = new_stop
-    dt_date.to_csv(date_csv,index=False,encoding='latin-1')
+    dt_date.to_csv(date_csv,index=False)
 
 
 def findExistingData(csv_file,save_dir,output_file):
@@ -143,7 +141,7 @@ def findExistingData(csv_file,save_dir,output_file):
             dt.loc[index,first_col] = folder  
             
     #Save the csv files one last time
-    dt.to_csv(output_file,index=False,encoding='latin-1')
+    dt.to_csv(output_file,index=False)
 
 
 

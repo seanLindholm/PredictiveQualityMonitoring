@@ -27,8 +27,8 @@ pure_img_approved = data_path + "Poor_func_approved.csv"
 pure_img_falied = data_path + "Poor_func_failed.csv" 
 
 
-function_test_col_transformed = ["2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac høj O2",
-                                 "Sensitivity [pA/µM]","t on 10/5 mM glu/lac [s]","Lav O2 - Høj O2"]
+function_test_col_transformed = ["Tid efter start [timer]","2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac hoj O2",
+                                 "Sensitivity [pA/M]","t on 10/5 mM glu/lac [s]","Lav O2 - Hoj O2"]
 
 fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_void_cav","CA_cav_depth","Ca_void_mem","CA_overlap_min","CA_overlap_max","YM_void_mem"]
 #fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_cav_depth","CA_overlap_min","CA_overlap_max"]
@@ -81,7 +81,7 @@ def outlierRemoval(file,contamination='auto'):
     df_2 = df[function_test_col_transformed]
     col = df_2.to_numpy()
     iso = isoF(contamination=contamination)
-    yhat = iso.fit_predict(col.reshape(-1,6))
+    yhat = iso.fit_predict(col.reshape(-1,7))
     mask = yhat != -1
     #print(mask.reshape(-1,1))
     index_del = []

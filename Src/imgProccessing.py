@@ -422,8 +422,8 @@ def invertGrayscale():
 
 
 
-# generateProfile()
-getNumberOfPeaksThresh()
-# plotProfile()
+generateProfile()
+# getNumberOfPeaksThresh()
+plotProfile()
 # plotProfile(img_test=path+"932-029-R28424-N003-A5-Approved\\")
-# plt.show()
+plt.show()

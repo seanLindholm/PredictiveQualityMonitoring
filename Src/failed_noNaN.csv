@@ -1,4 +1,4 @@
-bcr_dir,RunNumber,PartNumber,Timestamp,Sensor,BoardNumber,ArrayNumber,Class,Tid efter start [timer],2/1 mM Glu/Lac [mM],1 mM H2O2 [mM],40/25 mM glu/lac høj O2,Sensitivity [pA/µM],t on 10/5 mM glu/lac [s],Lav O2 - Høj O2
+bcr_dir,RunNumber,PartNumber,Timestamp,Sensor,BoardNumber,ArrayNumber,Class,Tid efter start [timer],2/1 mM Glu/Lac [mM],1 mM H2O2 [mM],40/25 mM glu/lac hÃƒÆ’Ã‚Â¸j O2,Sensitivity [pA/Ãƒâ€šÃ‚ÂµM],t on 10/5 mM glu/lac [s],Lav O2 - HÃƒÆ’Ã‚Â¸j O2
 932-029-R29184-N003-A16-Failed,R29184,932-029,12-04-2021 07:27,Glu,3,16,Failed,6.88,0.36,1.2,2.11,443,5.5,0.55
 932-029-R29223-N001-A16-Failed,R29223,932-029,12-04-2021 07:24,Glu,1,16,Failed,6.98,0.41,3.4,4.28,466,0.4,0.75
 932-029-R29223-N002-A11-Failed,R29223,932-029,12-04-2021 07:24,Glu,2,11,Failed,6.93,0.36,2.1,4.29,418,0.6,0.72

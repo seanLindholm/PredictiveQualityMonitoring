@@ -62,8 +62,9 @@ def removeDublicates():
     df_a.drop(df_a_del,inplace=True)
     saveDF(df_f,failed_NoNaN)
     saveDF(df_a,approved_NoNaN)
-    for f in folder_del:
-        os.system("rmdir "+path+f + " /s /q")
+    if ("y" == input(f"Found {len(folder_del)} folders for deletion in remove dublicates, should thye be deleted? [Y/N]")):
+        for f in folder_del:
+            os.system("rmdir "+path+f + " /s /q")
 
 def removeOddSizeImages():
     #This function removes any images that isn't 256x256 (for the inner cicrle)
@@ -88,25 +89,26 @@ def removeOddSizeImages():
                     break
             except Exception:
                 folder_del.append(folder)
-    for f in folder_del:
-        os.system("rmdir "+path+f + " /s /q")
+
+    if ("y" == input(f"Found {len(folder_del)} folders for deletion in removeOddSize, should thye be deleted? [Y/N]")):
+        for f in folder_del:
+            os.system("rmdir \""+path+f + "\" /s /q")
+
 
 def main():
-    removeDublicates()
+    #removeDublicates()
     
     #df = removeNANrows(getData(failed),"bcr_dir")
     #saveDF(df,failed_NoNaN)
     #df = removeNANrows(getData(approved),"bcr_dir")
     #saveDF(df,approved_NoNaN)
     #cleanOutAllJpg()
-    outlierRemoval(failed)
-    outlierRemoval(approved)
-    BcrToJpg()
+    #BcrToJpg()
     #CreateAndSaveImgs(False)
     #CreateAndSaveImgs(True)
 
     #print("Removing odd sized imgaes")
-    removeOddSizeImages()
+    #removeOddSizeImages()
     
     ##List variance,mean and std-deviation of the different parameters 
     #statisticalAnalysis(failed_NoNaN,function_test_col_transformed)
