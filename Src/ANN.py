@@ -7,7 +7,7 @@ import torch.utils.data as Data
 from Helper import Data_handler, progressBar
 from torch import nn, optim, utils
 import matplotlib.pyplot as plt
-
+from constants_ import data_path 
 
 
 
@@ -33,7 +33,7 @@ class FCNN(nn.Module):
         self.fc4 = nn.Linear(64, 32)
         self.fc5 = nn.Linear(32, 16)
         self.fc6 = nn.Linear(16, 1)
-
+        self.curr_max_accuracy = 0
 
 
         #The optimizer
@@ -130,6 +130,9 @@ class FCNN(nn.Module):
             acc_test /= X_test.shape[0]
             loss_train /= X_train.shape[0]
 
+            if (acc_test > self.curr_max_accuracy):
+                self.curr_max_accuracy = acc_test
+                torch.save(self.state_dict(), data_path+"Model_ScanDATA")
             self.epoch_loss.append(loss_train)
             self.epoch_acc.append(acc_test) 
 
@@ -146,7 +149,7 @@ class FCNN(nn.Module):
 
             print(f"\r{e+1}/{epochs}",end='\r')
             # --- return acc after trainig --- #
-        return acc_test
+        return self.curr_max_accuracy
 
 
     def plot(self):

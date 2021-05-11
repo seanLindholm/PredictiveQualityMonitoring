@@ -42,7 +42,7 @@ def main(SaveImgData=False):
     max_acc = 0
     acc_avg = 0
     classPred = True
-    tests = 20
+    tests = 1
     for _ in range(tests):
         X_train,X_test,y_train,y_test= scrampleAndSplitData(df_f,df_a)#,out_parameters=["40/25 mM glu/lac høj O2"])
         net = FCNN(X_train.shape[1],early_stopping=False,class_prediction=classPred).to(device)
@@ -50,15 +50,14 @@ def main(SaveImgData=False):
         hist_loss = np.array([])
         hist_acc = np.array([])
 
-        acc = net.train_(X_train,X_test,y_train,y_test,epochs=200)
+        acc = net.train_(X_train,X_test,y_train,y_test,epochs=1000)
         acc_avg += acc
         if (acc > max_acc): 
             max_acc = acc
-            torch.save(net.state_dict(), path+"Model_ScanDATA")
         hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
      
         hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
-    #plot(hist_loss,hist_acc)
+    plot(hist_loss,hist_acc)
     print(f"After {tests} runs of 200 epochs we get a max accuracy of {max_acc*100} with an average of {(acc_avg/tests)*100}")
     
     #test other methods
@@ -67,7 +66,7 @@ def main(SaveImgData=False):
 
 
     net = FCNN(X_train.shape[1],early_stopping=False,class_prediction=classPred).to(device)
-    net.load_state_dict(torch.load(path+"Model_ScanDATA"))
+    net.load_state_dict(torch.load(data_path+"Model_ScanDATA"))
     net.eval()
     corr = 0
     fail = 0
