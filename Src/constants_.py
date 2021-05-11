@@ -23,15 +23,21 @@ approved_ext_norm = file_path + "approved_ext_Norm.csv"
 approved_NoNaN = file_path + "approved_NoNaN.csv"
 approved_DEA = file_path + "approved_withDEAScore.csv"
 
+none_trans_failed = data_path + "Failed_w_glu.csv"
+none_trans_approved = data_path + "Approved_w_glu.csv"
 pure_img_approved = data_path + "Poor_func_approved.csv"
 pure_img_falied = data_path + "Poor_func_failed.csv" 
 
 
 function_test_col_transformed = ["Tid efter start [timer]","2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac hoj O2",
                                  "Sensitivity [pA/M]","t on 10/5 mM glu/lac [s]","Lav O2 - Hoj O2"]
+                                 
+function_test_col = ["Tid efter start [timer]","2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac hoj O2",
+                    "40/25 mM glu/lac lav O2","Sensitivity [pA/M]","t on 10/5 mM glu/lac [s]","Lav O2 - Hoj O2",
+                    "Tid i min Glu","50 mM Mannose","35 mM Glycolsyre","2 mM PAM"]
 
-fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_void_cav","CA_cav_depth","Ca_void_mem","CA_overlap_min","CA_overlap_max","YM_void_mem"]
-#fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_cav_depth","CA_overlap_min","CA_overlap_max"]
+#fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_void_cav","CA_cav_depth","Ca_void_mem","CA_overlap_min","CA_overlap_max","YM_void_mem"]
+fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_cav_depth","CA_overlap_min","CA_overlap_max"]
 
 def saveDF(df,name):
     df.to_csv(name,index=False)
@@ -70,7 +76,7 @@ def saveImageData(save_name,file_to_save,path=""):
                 pass
     np.savez(save_name+".npz",l)
 
-def outlierRemoval(file,contamination='auto'):
+def outlierRemoval(file,isTransformed=True,contamination='auto'):
     """
         This outlier detector makes use of the Isolated tree method, from
         the sklearn library.
@@ -78,10 +84,15 @@ def outlierRemoval(file,contamination='auto'):
     df = getData(file)
     print(df.columns)
 
-    df_2 = df[function_test_col_transformed]
+    if(isTransformed):
+        shape_ = len(function_test_col_transformed)
+        df_2 = df[function_test_col_transformed]
+    else:
+        shape_ = len(function_test_col)
+        df_2 = df[function_test_col]
     col = df_2.to_numpy()
     iso = isoF(contamination=contamination)
-    yhat = iso.fit_predict(col.reshape(-1,7))
+    yhat = iso.fit_predict(col.reshape(-1,shape_))
     mask = yhat != -1
     #print(mask.reshape(-1,1))
     index_del = []

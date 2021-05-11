@@ -26,8 +26,8 @@ def test():
 def main(SaveImgData=False):
    
     #The DEA score data
-    df_f = getData(failed)
-    df_a = getData(approved)
+    df_f = getData(none_trans_failed)
+    df_a = getData(none_trans_approved)
     #y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
 
     # pca = lowestComponancePCA(data,0.95)
@@ -44,7 +44,7 @@ def main(SaveImgData=False):
     classPred = True
     tests = 1
     for _ in range(tests):
-        X_train,X_test,y_train,y_test= scrampleAndSplitData(df_f,df_a)#,out_parameters=["40/25 mM glu/lac høj O2"])
+        X_train,X_test,y_train,y_test= scrampleAndSplitData(df_f,df_a,out_parameters=["40/25 mM glu/lac hoj O2"])
         net = FCNN(X_train.shape[1],early_stopping=False,class_prediction=classPred).to(device)
 
         hist_loss = np.array([])
