@@ -79,9 +79,7 @@ def main(SaveImgData=False):
 
     plot(hist_loss,hist_acc)
 
-    # Signal processing - 
-    # Fue transform 
-    # welsh transform
+    
 
     for ind in np.random.permutation(X_test_img.shape[0])[:5]:
         dea,_,_=net.forward(X_test[ind].reshape(1,1,-1),net.hx,net.hy)

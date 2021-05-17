@@ -22,6 +22,8 @@ class FCNN(nn.Module):
         #this is used in the loss function to give a higher penelty if it also misses the correct class label
         self.class_prediction = class_prediction
         self.early_stopping = early_stopping
+        self.lowest_RMSE = 1000
+        self.curr_max_accuracy = 0
 
         super(FCNN, self).__init__()
         # First fully connected layer
@@ -33,7 +35,6 @@ class FCNN(nn.Module):
         self.fc4 = nn.Linear(64, 32)
         self.fc5 = nn.Linear(32, 16)
         self.fc6 = nn.Linear(16, 1)
-        self.curr_max_accuracy = 0
 
 
         #The optimizer
@@ -83,7 +84,7 @@ class FCNN(nn.Module):
         return count
 
     def calcRecClassPred(self,pred,test):
-        return sum(np.square(test-pred))
+        return np.sqrt(np.mean(((test-pred).numpy())**2))
 
     def train_(self,X_train,X_test,y_train,y_test,epochs=10):
         X_train = torch.tensor(X_train) if not torch.is_tensor(X_train) else X_train
@@ -102,7 +103,7 @@ class FCNN(nn.Module):
             loss_train = 0
             acc_test = 0
 
-            for X_t,y_t in batchSplit(X_train,y_train,batch_size=4):
+            for X_t,y_t in batchSplit(X_train,y_train,batch_size=32):
                 # --- Trainig ----- #
                 self.train()
                 self.optimizer.zero_grad()
@@ -113,7 +114,7 @@ class FCNN(nn.Module):
                 self.optimizer.step()
                 loss_train += out.data.cpu().numpy()
 
-            for X_tst,y_tst in batchSplit(X_test,y_test,batch_size=4):
+            for X_tst,y_tst in batchSplit(X_test,y_test,batch_size=16):
                 # -- Testing -- #
                 self.eval()
 
@@ -130,9 +131,14 @@ class FCNN(nn.Module):
             acc_test /= X_test.shape[0]
             loss_train /= X_train.shape[0]
 
-            if (acc_test > self.curr_max_accuracy):
-                self.curr_max_accuracy = acc_test
-                torch.save(self.state_dict(), data_path+"Model_ScanDATA")
+            if (self.class_prediction):
+                if (acc_test > self.curr_max_accuracy):
+                    self.curr_max_accuracy = acc_test
+                    torch.save(self.state_dict(), data_path+"Model_ScanDATA")
+            else:
+                if (acc_test < self.lowest_RMSE):
+                    self.lowest_RMSE = acc_test
+                    torch.save(self.state_dict(), data_path+"Model_ScanDATA")
             self.epoch_loss.append(loss_train)
             self.epoch_acc.append(acc_test) 
 
@@ -308,7 +314,7 @@ class CNN(nn.Module):
     """
         Expects a picture of any dimention as input
     """
-    def __init__(self,in_channels,early_stopping=True,big_picture=False,classPrediction=False):
+    def __init__(self,in_channels,early_stopping=True,big_picture=False,classPrediction=False,split = False):
         #this is used in the loss function to give a higher penelty if it also misses the correct class label
         self.early_stopping = early_stopping
         self.classPrediction = classPrediction
@@ -322,7 +328,15 @@ class CNN(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.drop = nn.Dropout(p=0.3)
         
-        if big_picture:
+
+        if (split):
+            self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1) 
+            self.linear1 = nn.Linear(1440,512)
+            self.linear2 = nn.Linear(512,64)
+            self.linear3 = nn.Linear(64,1)
+
+
+        elif big_picture:
             self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1,stride=2) 
             self.linear1 = nn.Linear(7680,512)
             self.linear2 = nn.Linear(512,64)
@@ -361,8 +375,8 @@ class CNN(nn.Module):
         #x = F.relu(self.conv4(x))
         #x = self.pool(x)
         #x = F.relu(self.conv5(x))
-        
         x = x.flatten(start_dim=1)
+
         x=F.relu(self.linear1(x))
         x=F.relu(self.linear2(x))
         if(self.classPrediction):
@@ -373,7 +387,15 @@ class CNN(nn.Module):
 
         return x
 
-    def train(self,X_train,X_test,y_train,y_test,epochs=10):
+    def calcAccClassPred(self,pred,test):
+        count = 0
+        max_ = pred.shape[0]
+        for guess,exp in zip(pred,test):
+            if(torch.round(guess)==exp):
+                count += 1
+        return count
+        
+    def train_(self,X_train,X_test,y_train,y_test,epochs=10):
         X_train = torch.tensor(X_train) if not torch.is_tensor(X_train) else X_train
         X_test = torch.tensor(X_test) if not torch.is_tensor(X_test) else X_test
         y_train = torch.tensor(y_train) if not torch.is_tensor(y_train) else y_train
@@ -392,6 +414,7 @@ class CNN(nn.Module):
 
             for X_t,y_t in batchSplit(X_train,y_train):
                 # --- Trainig ----- #
+                self.train()
                 #torch.autograd.set_detect_anomaly(True)
                 y_t=y_t.reshape(-1,1)
                 if(not self.classPrediction):
@@ -413,7 +436,8 @@ class CNN(nn.Module):
                 self.optimizer.step()
                 loss_train += out.data.cpu().numpy()
 
-            for X_tst,y_tst in batchSplit(X_train,y_train):
+            for X_tst,y_tst in batchSplit(X_test,y_test):
+                self.eval()
                 y_tst = y_tst.reshape(-1,1)
                 if(not self.classPrediction):
                     y_tst = (y_tst*100)
@@ -426,7 +450,7 @@ class CNN(nn.Module):
                 if not self.classPrediction:
                     acc_test += torch.mean((abs(pred.data.cpu()-y_tst)))
                 else:
-                    acc_test += (abs(pred.data.cpu()-y_tst)).sum()
+                    acc_test += self.calcAccClassPred(pred.cpu(),y_tst)
                 #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
 
 
@@ -434,8 +458,8 @@ class CNN(nn.Module):
                 
 
 
-            acc_test /= X_test.shape[0]
-            loss_train /= X_train.shape[0]
+            acc_test /= (X_test.shape[0])
+            loss_train /= (X_train.shape[0])
 
             self.epoch_loss.append(loss_train)
             self.epoch_acc.append(acc_test) 

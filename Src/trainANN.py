@@ -26,8 +26,8 @@ def test():
 def main(SaveImgData=False):
    
     #The DEA score data
-    df_f = getData(none_trans_failed)
-    df_a = getData(none_trans_approved)
+    df_f = getData(failed_NoNaN)
+    df_a = getData(approved_NoNaN)
     #y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
 
     # pca = lowestComponancePCA(data,0.95)
@@ -39,25 +39,52 @@ def main(SaveImgData=False):
     
     one_counter=0
     zero_counter=0
-    max_acc = 0
-    acc_avg = 0
+    
+    
     classPred = True
-    tests = 1
+    tests = 10
+    param_hist_loss = [i for i in range(len(function_test_col))]
+    param_hist_acc = [i for i in range(len(function_test_col))]
+    #for param,i in zip(function_test_col,range(len(function_test_col))):
+    max_acc = 0
+    lowest_RMSE = 1000
+    acc_avg = 0
+    saveImageData("numpyData\\img_data_split_YM","in_inner_crop_YM_diff_strip.jpg",path=path)
+    print("Done file YM in_inner circle")
     for _ in range(tests):
-        X_train,X_test,y_train,y_test= scrampleAndSplitData(df_f,df_a,out_parameters=["40/25 mM glu/lac hoj O2"])
+        X_train,X_test,y_train,y_test= scrampleAndSplitData(df_f,df_a,numpy_data_name="numpyData\\img_data_split_YM")#,out_parameters=[param])
+        exit(0)
         net = FCNN(X_train.shape[1],early_stopping=False,class_prediction=classPred).to(device)
 
         hist_loss = np.array([])
         hist_acc = np.array([])
 
-        acc = net.train_(X_train,X_test,y_train,y_test,epochs=1000)
+        acc = net.train_(X_train,X_test,y_train,y_test,epochs=200)
         acc_avg += acc
-        if (acc > max_acc): 
-            max_acc = acc
+        if (classPred):
+            
+            if (acc > max_acc): 
+                max_acc = acc 
+                # param_hist_loss[i] = net.epoch_loss
+                # param_hist_acc[i] = net.epoch_acc
+        else:
+            
+            if (acc < lowest_RMSE): 
+                max_acc = acc
+                lowest_RMSE = acc
+                # param_hist_loss[i] = net.epoch_loss
+                # param_hist_acc[i] = net.epoch_acc
+        
         hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
-     
         hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
-    plot(hist_loss,hist_acc)
+
+
+
+    # for param,i in zip(function_test_col,range(len(function_test_col))): 
+    #     print(f"Acc and lost for {param} - with best accuracy")
+    #     plot(param_hist_loss[i],param_hist_acc[i])
+
+    
     print(f"After {tests} runs of 200 epochs we get a max accuracy of {max_acc*100} with an average of {(acc_avg/tests)*100}")
     
     #test other methods
@@ -85,7 +112,7 @@ def main(SaveImgData=False):
                 else: fp += 1
         
         else:
-            print(f"pred: {class_.cpu().detach().numpy()[0]} test: {y_test[ind]}, SError: {np.square(class_.cpu().detach().numpy()[0]-y_test[ind])}")
+            print(f"pred: {class_.cpu().detach().numpy()[0]} test: {y_test[ind]}, RMSError: {net.calcRecClassPred(class_.cpu().detach(),torch.tensor(y_test[ind]))}")
     if (classPred):
         print(f"Correct: {corr}, Failed: {fail}, acc {corr/(corr+fail) * 100}")
         print(f"True positive: {tp}\nTrue negative {tn}\nFalse positive: {fp}\nFalse negative: {fn}")

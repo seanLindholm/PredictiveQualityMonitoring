@@ -1,11 +1,13 @@
 import cv2 
+from scipy import ndimage
 import numpy as np 
 import os
 import matplotlib.pyplot as plt
 from constants_ import *
 from scipy.signal import find_peaks
+from scipy.fft import rfft, rfftfreq,irfft
 load_name = ["inner_crop_RAW","inner_crop_CA_diff","inner_crop_YM_diff"]
-
+area1 = [2,50]; area2 = [200,250]
 
 def listDicts(path):
         for dict_ in os.listdir(path):
@@ -39,6 +41,16 @@ def inner_innerCircle(img):
     mask2,_ = MaskCircles(img,80)
     return mask1 & ~mask2,crop
 
+
+
+def PeaksOfInterest(peaks,areas):
+    ret = []
+    for area in areas:
+        copy = peaks.copy()
+        copy[copy < area[0]] = 0
+        copy[copy > area[1]] = 0
+        ret.append(list(filter(lambda a: a != 0, copy)))
+    return [i for l in ret for i in l]
 
 
 
@@ -284,8 +296,10 @@ def getNumberOfPeaksThresh(threshold=35):
             y_test = abs(y_test.astype('float') - y_section)
             x_test[x_test<35] = 0
             y_test[y_test<35] = 0
-            x_peaks, _ = find_peaks(x_test)
-            y_peaks, _ = find_peaks(y_test)
+            x_peaks, _ = find_peaks(x_test,threshold=1)
+            y_peaks, _ = find_peaks(y_test,threshold=1)
+            x_peaks = np.array(PeaksOfInterest(x_peaks,[[2,50],[200,250]]))
+            y_peaks = np.array(PeaksOfInterest(y_peaks,[[2,50],[200,250]]))
             peaks_x.append(x_peaks)
             peaks_y.append(y_peaks)
             acc_peaks_x += len(x_peaks)
@@ -334,8 +348,10 @@ def getNumberOfPeaksThresh(threshold=35):
             y_test = abs(y_test.astype('float') - y_section)
             x_test[x_test<35] = 0
             y_test[y_test<35] = 0
-            x_peaks, _ = find_peaks(x_test)
-            y_peaks, _ = find_peaks(y_test)
+            x_peaks, _ = find_peaks(x_test,threshold=1)# + find_peaks(x_test[200:250])
+            y_peaks, _ = find_peaks(y_test,threshold=1)# + find_peaks(x_test[200:250])
+            x_peaks = np.array(PeaksOfInterest(x_peaks,[[2,50],[200,250]]))
+            y_peaks = np.array(PeaksOfInterest(y_peaks,[[2,50],[200,250]]))
             peaks_x.append(x_peaks)
             peaks_y.append(y_peaks)
             acc_peaks_x += len(x_peaks)
@@ -352,6 +368,7 @@ def getNumberOfPeaksThresh(threshold=35):
         print(f"Average number of max peak x: {acc_max_x/len(list_fail):.2f} and max peak y: {acc_max_y/len(list_fail):.2f}, std x: {np.std(np.array(max_x)):.2f}, std y: {np.std(np.array(max_y)):.2f} for Failed - {name}")
 
         print()
+
 
 
 
@@ -383,8 +400,11 @@ def plotProfile(img_test = None):
             y_test = abs(y_test.astype('float') - y_section)
             x_test[x_test<35] = 0
             y_test[y_test<35] = 0
-            x_peaks, _ = find_peaks(x_test)
-            y_peaks, _ = find_peaks(y_test)
+            x_peaks, _ = find_peaks(x_test,threshold=1)
+            y_peaks, _ = find_peaks(y_test,threshold=1)
+            x_peaks = PeaksOfInterest(x_peaks,[[2,50],[200,250]])
+            y_peaks = PeaksOfInterest(y_peaks,[[2,50],[200,250]])
+
          
 
 
@@ -401,6 +421,7 @@ def plotProfile(img_test = None):
             axs[0,1].plot(x_y,y_section,color='orange')
             axs[1,0].plot(x_x,x_test,color='red')
             axs[1,0].plot(x_peaks,x_test[x_peaks],'X')
+
 
             axs[1,1].plot(x_y,y_test,color='green')
             axs[1,1].plot(y_peaks,y_test[y_peaks],'X')
@@ -420,10 +441,76 @@ def invertGrayscale():
         cv2.imshow('image_org',img)
         cv2.waitKey(0)
 
+def cropOutPureWhite(n_array):
+    back_travel = list(range(n_array.shape[1]))
+    back_travel.reverse()
+    for i in back_travel:
+        if np.mean(n_array[:,i]) > 240:
+            n_array = np.delete(n_array,i,1)
+    return n_array
 
+# def rectImageToOnlyNonWhitePixels():
+#     for folder in listDicts(path):
+#         for img_ in ["\\in_inner_crop_YM_diff","\\in_inner_crop_CA_diff"]:
+#             img = cv2.imread(path+folder+img_+".jpg")
+#             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#             #35 rows and -1 columns with only none with strips (remove pure white strips)
+#             ret = []
+#             stripSize = 32
+#             prevStrip = 0
+#             currentStrip = stripSize
+#             while (gray.shape[0] >= currentStrip):
+#                 strip = gray[prevStrip:currentStrip,:]
+#                 if ret == []:
+#                     ret = cropOutPureWhite(strip)
+#                 else:
+#                     ret = np.append(ret,cropOutPureWhite(strip),axis=1)
+#                 prevStrip = currentStrip
+#                 currentStrip += stripSize
+#             print(ret.shape)
+#             cv2.imwrite(path+folder+img_+"_strip.jpg",ret)
+#         print()
 
-generateProfile()
-# getNumberOfPeaksThresh()
-plotProfile()
-# plotProfile(img_test=path+"932-029-R28424-N003-A5-Approved\\")
-plt.show()
+def rectImageToOnlyNonWhitePixels():
+    stripSize = 35
+    count = 0
+    for folder in listDicts(path):
+        print(f"{folder} - {count}")
+        count+=1
+        for img_ in ["\\in_inner_crop_YM_diff","\\in_inner_crop_CA_diff"]:
+            img = cv2.imread(path+folder+img_+".jpg")
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            mid = int(gray.shape[1]/2)
+            degrees = range(360)
+            ret = None
+
+            for c_ in degrees:
+                gray = ndimage.rotate(gray, c_, reshape=False)
+                if ret is None:
+                    ret = gray[:stripSize,mid].reshape(-1,1)
+                else:
+                    ret = np.append(ret,gray[:stripSize,mid].reshape(-1,1),axis=1)
+            print(ret.shape)
+            cv2.imwrite(path+folder+img_+"_strip.jpg",ret[3:,:])
+        print()
+
+#generateProfile()
+#getNumberOfPeaksThresh()
+# plotProfile()
+#rectImageToOnlyNonWhitePixels()
+#plotProfile(img_test=path+"932-029-R28424-N003-A5-Approved\\")
+
+# plt.show()
+#img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\inner_crop_YM.jpg")
+#img = cv2.imread(path+"932-029-R29728-N001-A10-Failed\\inner_crop_YM_diff.jpg")
+
+#extractMidSection(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),RET = False)
+#plt.show()
+# print(x.shape)
+# yf = rfft(x[5:])
+# xf = rfftfreq(x[5:].shape[0], 1/50)
+# plt.figure()
+# plt.plot(xf, np.abs(yf))
+# plt.figure()
+# plt.plot(irfft(yf))
+# plt.show()

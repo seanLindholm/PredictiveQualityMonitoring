@@ -98,10 +98,10 @@ def removeOddSizeImages():
 def main():
     #removeDublicates()
     
-    #df = removeNANrows(getData(failed),"bcr_dir")
-    #saveDF(df,failed_NoNaN)
-    #df = removeNANrows(getData(approved),"bcr_dir")
-    #saveDF(df,approved_NoNaN)
+    df = removeNANrows(getData(failed),"bcr_dir")
+    saveDF(df,failed_NoNaN)
+    df = removeNANrows(getData(approved),"bcr_dir")
+    saveDF(df,approved_NoNaN)
     #cleanOutAllJpg()
     #BcrToJpg()
     #CreateAndSaveImgs(False)

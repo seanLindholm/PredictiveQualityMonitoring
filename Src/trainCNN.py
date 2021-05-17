@@ -44,25 +44,26 @@ def main(SaveImgData=False):
 
 
 
-        saveImageData("numpyData\\img_data_in_innerCircle_YM","in_inner_crop_YM.jpg",path=path)
-        print("Done file YM in_inner circle")
+    saveImageData("numpyData\\img_data_split_YM","in_inner_crop_YM_diff_strip.jpg",path=path)
+    print("Done file YM in_inner circle")
 
 
     df = getData(failed_DEA)
     df_a = getData(approved_DEA)
-    X_train,X_test,y_train,y_test= scrampleAndSplitData(df,df_a,ImageData=True,numpy_data_name="numpyData\\img_data_in_innerCircle_YM_diff")#,out_parameters=["40/25 mM glu/lac høj O2"])
+    X_train,X_test,y_train,y_test= scrampleAndSplitData(df,df_a,ImageData=True,numpy_data_name="numpyData\\img_data_split_YM")#,out_parameters=["40/25 mM glu/lac høj O2"])
     
 
 
     big_picture = False
-    net = CNN(1,big_picture=big_picture,classPrediction=True,early_stopping=True).to(device)
-    torch.save(net.state_dict(), path+"YM_in_inner")
+    split = True
+    net = CNN(1,big_picture=big_picture,classPrediction=True,early_stopping=False,split=split).to(device)
+    torch.save(net.state_dict(), data_path+"YM_in_inner")
 
     hist_loss = np.array([])
     hist_acc = np.array([])
 
     
-    net.train(X_train,X_test,y_train,y_test,epochs=2000)
+    net.train_(X_train,X_test,y_train,y_test,epochs=1000)
     hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
     hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
     
@@ -70,7 +71,9 @@ def main(SaveImgData=False):
     plot(hist_loss,hist_acc)
 
     for ind in np.random.permutation(X_test.shape[0])[:15]:
-        if big_picture:
+        if split:
+            img = X_test[ind].reshape(1,1,32,360)
+        elif big_picture:
             img = X_test[ind].reshape(1,1,482,512)
         else:
             img = X_test[ind].reshape(1,1,256,256)
@@ -78,9 +81,9 @@ def main(SaveImgData=False):
         img = img[0][0]*255
         img = img.astype('uint8')
         cv2.imshow('Original',img)
-        print(dea,y_test[ind])
+        print(torch.round(dea),y_test[ind])
         cv2.waitKey(0)
-    torch.save(net.state_dict(), path+"YM_both")
+    torch.save(net.state_dict(), data_path+"YM_both")
        
 if __name__ == "__main__":
     main(False)

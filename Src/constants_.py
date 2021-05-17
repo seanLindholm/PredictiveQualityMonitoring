@@ -66,14 +66,13 @@ def saveImageData(save_name,file_to_save,path=""):
             p = path + "\\" + folder
             try:
                 img = cv2.cvtColor(cv2.imread(p+"\\"+ file_to_save), cv2.COLOR_BGR2GRAY)
-                if(img.shape[0] == 482 or img.shape[0] == 256):
+                if(img.shape[0] == 482 or img.shape[0] == 256 or img.shape[0] == 32):
                     img = img.astype('float32');img /= 255;img = img.reshape(1,img.shape[0],img.shape[1])        
                     l.append(img);counter+=1
-                if(counter == 25):
-                    np.savez(save_name+".npz",l)
-                    counter = 1
-            except:
+            except Exception:
+                print(f"{folder} - Hello")
                 pass
+
     np.savez(save_name+".npz",l)
 
 def outlierRemoval(file,isTransformed=True,contamination='auto'):
@@ -160,7 +159,10 @@ def scrampleAndSplitData(df,df_a,ImageData=False,numpy_data_name="",WithDEA = Fa
     if ImageData:
         data = loadImageData(numpy_data_name)
     else:
-        data = normalize(df.append(df_a)[fcnn_data].to_numpy())
+        if(numpy_data_name != ""):
+            pictures_ = loadImageData(numpy_data_name).reshape(loadImageData(numpy_data_name).shape[0],-1)
+            print(pictures_.shape)
+        data = normalize(np.append(df.append(df_a)[fcnn_data].to_numpy(),pictures_,axis=1))
     #80 % train 20% test
     split = int(df.shape[0]*0.8)
     #random indecies
