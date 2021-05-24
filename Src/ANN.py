@@ -27,14 +27,14 @@ class FCNN(nn.Module):
 
         super(FCNN, self).__init__()
         # First fully connected layer
-        self.fc1 = nn.Linear(in_features, 256)
+        self.fc1 = nn.Linear(in_features, 1024)
         # Second fully connected layer that outputs our 10 labels
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128,64 )
+        self.fc2 = nn.Linear(1024, 512)
+        self.fc3 = nn.Linear(512,256 )
 
-        self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(32, 16)
-        self.fc6 = nn.Linear(16, 1)
+        self.fc4 = nn.Linear(256, 64)
+        self.fc5 = nn.Linear(64, 32)
+        self.fc6 = nn.Linear(32, 1)
 
 
         #The optimizer

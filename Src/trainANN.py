@@ -49,11 +49,8 @@ def main(SaveImgData=False):
     max_acc = 0
     lowest_RMSE = 1000
     acc_avg = 0
-    saveImageData("numpyData\\img_data_split_YM","in_inner_crop_YM_diff_strip.jpg",path=path)
-    print("Done file YM in_inner circle")
     for _ in range(tests):
         X_train,X_test,y_train,y_test= scrampleAndSplitData(df_f,df_a,numpy_data_name="numpyData\\img_data_split_YM")#,out_parameters=[param])
-        exit(0)
         net = FCNN(X_train.shape[1],early_stopping=False,class_prediction=classPred).to(device)
 
         hist_loss = np.array([])

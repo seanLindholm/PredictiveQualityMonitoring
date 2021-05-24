@@ -95,13 +95,24 @@ def removeOddSizeImages():
             os.system("rmdir \""+path+f + "\" /s /q")
 
 
+def removeNonExisitingFolders(df_name):
+    df = getData(df_name)
+    df_del = []
+    for index,r in df.iterrows():
+        folder = r['bcr_dir']
+        if(not os.path.exists(path+folder)):
+            print(f"{folder} - damn!")
+            df_del.append(index)
+    df.drop(df_del,inplace=True)
+    saveDF(df,df_name)
 def main():
     #removeDublicates()
-    
-    df = removeNANrows(getData(failed),"bcr_dir")
-    saveDF(df,failed_NoNaN)
-    df = removeNANrows(getData(approved),"bcr_dir")
-    saveDF(df,approved_NoNaN)
+    removeNonExisitingFolders(failed_NoNaN)
+    removeNonExisitingFolders(approved_NoNaN)
+    # df = removeNANrows(getData(failed),"bcr_dir")
+    # saveDF(df,failed_NoNaN)
+    # df = removeNANrows(getData(approved),"bcr_dir")
+    # saveDF(df,approved_NoNaN)
     #cleanOutAllJpg()
     #BcrToJpg()
     #CreateAndSaveImgs(False)

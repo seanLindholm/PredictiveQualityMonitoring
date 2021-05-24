@@ -28,7 +28,8 @@ none_trans_approved = data_path + "Approved_w_glu.csv"
 pure_img_approved = data_path + "Poor_func_approved.csv"
 pure_img_falied = data_path + "Poor_func_failed.csv" 
 
-
+model_approved = data_path + "ModelSimSample_good.csv"
+model_failed = data_path + "ModelSimSample_bad.csv"
 function_test_col_transformed = ["Tid efter start [timer]","2/1 mM Glu/Lac [mM]","1 mM H2O2 [mM]","40/25 mM glu/lac hoj O2",
                                  "Sensitivity [pA/M]","t on 10/5 mM glu/lac [s]","Lav O2 - Hoj O2"]
                                  
