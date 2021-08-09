@@ -493,19 +493,19 @@ def rectImageToOnlyNonWhitePixels():
             print(ret.shape)
             cv2.imwrite(path+folder+img_+"_strip.jpg",ret[3:,:])
         print()
-
+#
 #generateProfile()
 #getNumberOfPeaksThresh()
-# plotProfile()
+#plotProfile()
 #rectImageToOnlyNonWhitePixels()
 #plotProfile(img_test=path+"932-029-R28424-N003-A5-Approved\\")
 
 # plt.show()
-#img = cv2.imread(path+"932-029-R28424-N003-A5-Approved\\inner_crop_YM.jpg")
-#img = cv2.imread(path+"932-029-R29728-N001-A10-Failed\\inner_crop_YM_diff.jpg")
+# img = cv2.imread(path+"932-029-R29728-N001-A10-Failed\\both_crop_YM.jpg")
+# #img = cv2.imread(path+"932-029-R29728-N001-A10-Failed\\inner_crop_YM_diff.jpg")
 
-#extractMidSection(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),RET = False)
-#plt.show()
+# extractMidSection(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),RET = False)
+# plt.show()
 # print(x.shape)
 # yf = rfft(x[5:])
 # xf = rfftfreq(x[5:].shape[0], 1/50)

@@ -178,6 +178,200 @@ class FCNN(nn.Module):
         plt.close('all')
 
 
+class MM(nn.Module):
+    
+    def __init__(self,in_channels,in_features,early_stopping=True,classPrediction=False):
+        #this is used in the loss function to give a higher penelty if it also misses the correct class label
+        self.early_stopping = early_stopping
+        self.classPrediction = classPrediction   
+        self.lowest_RMSE = 1000
+        self.curr_max_accuracy = 0
+
+        super(MM, self).__init__()
+        # The part that analysze the images
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1,stride=2) 
+        self.conv2 = nn.Conv2d(64, 16, 3, padding=1,stride=2)
+        self.conv3 = nn.Conv2d(16, 8, 3, padding=1,stride=2)
+        
+        self.pool = nn.MaxPool2d(2, 2)
+        self.drop = nn.Dropout(p=0.3)
+        
+        self.linear1 = nn.Linear(7680,512)
+        self.img_outFeatures = nn.Linear(512,64)
+
+
+        # Analyse the production data with the features from the images
+        self.fc1 = nn.Linear(in_features+64, 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.fc3 = nn.Linear(512,256 )
+        self.fc4 = nn.Linear(256,64)
+        self.fc5 = nn.Linear(64, 32)
+        self.fc6 = nn.Linear(32, 1)
+
+  
+
+        #The optimizer
+        self.optimizer = optim.Adam(self.parameters(),lr=10e-4)
+
+        #Loss        
+        if (self.classPrediction):
+            self.loss = nn.BCELoss()
+        else:
+            self.loss = nn.MSELoss()
+
+    def forward(self,x_img,x_features):
+        if not torch.is_tensor(x_features):
+            x_features = Variable(torch.tensor(x_features)).to(device)
+        if not torch.is_tensor(x_img):
+            x_img = Variable(torch.tensor(x_img)).to(device)
+       
+        #First reduce image to 64 features the architecture is choosen from 
+        # CNN with diff img and all the whole sensor (big img)
+        x_img =self.conv1(x_img)
+        x_img = self.conv2(x_img)
+        x_img = self.conv3(x_img)
+        x_img = self.pool(x_img)
+        x_img = x_img.flatten(start_dim=1)
+
+        x_img=F.relu(self.linear1(x_img))
+        x_img = F.relu(self.img_outFeatures(x_img))
+       
+        # Now cat torch the two features together
+        # This allows for backpropagation
+        x = torch.cat((x_img, x_features), dim=1)
+
+        # Now make a FCNN layer for the img feautres and the feautres from production
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = F.relu(x)
+        x = self.fc3(x)
+        x = F.relu(x)
+        x = self.fc4(x)
+        x = F.relu(x)
+        x = self.fc5(x)
+        x = F.relu(x)
+        x = self.fc6(x)
+
+        if self.classPrediction:
+            #Squeeze the output between 0-1 with sigmoid
+            output = torch.sigmoid(x)
+        else:
+            output = F.relu(x)
+        return output
+
+    def calcAccClassPred(self,pred,test):
+        count = 0
+        max_ = pred.shape[0]
+        for guess,exp in zip(pred,test):
+            if(torch.round(guess)==exp):
+                count += 1
+        return count
+
+    def calcRecClassPred(self,pred,test):
+        return np.sqrt(np.mean(((test-pred).numpy())**2))
+
+    def train_(self,X_train,X_test,X_train2,X_test2,y_train,y_test,epochs=10):
+        # X_train,X_test - is the images
+        # X_train2,X_test2 - is the production features
+        X_train = torch.tensor(X_train) if not torch.is_tensor(X_train) else X_train
+        X_test = torch.tensor(X_test) if not torch.is_tensor(X_test) else X_test
+        X_train2 = torch.tensor(X_train2) if not torch.is_tensor(X_train2) else X_train2
+        X_test2 = torch.tensor(X_test2) if not torch.is_tensor(X_test2) else X_test2
+        y_train = torch.tensor(y_train) if not torch.is_tensor(y_train) else y_train
+        y_test = torch.tensor(y_test) if not torch.is_tensor(y_test) else y_test
+        
+
+        self.epoch_loss = []
+        self.epoch_acc = []
+        old_acc = 0
+        threshold = 0.01
+        max_iter = 0
+
+        for e in range(epochs): 
+            loss_train = 0
+            acc_test = 0
+            for zip1,zip2 in zip(batchSplit(X_train,y_train,batch_size=16),batchSplit(X_train2,y_train,batch_size=16)):
+                X_t = zip1[0]
+                y_t = zip1[1]
+                X_t2 = zip2[0]
+
+                # --- Trainig ----- #
+                self.train()
+                self.optimizer.zero_grad()
+                pred = self(Variable(X_t).to(device),Variable(X_t2).to(device))
+                out = self.loss(pred,Variable(y_t).to(device))
+                out.backward()
+                self.optimizer.step()
+                loss_train += out.data.cpu().numpy()
+
+            for zip1,zip2 in zip(batchSplit(X_test,y_test,batch_size=4),batchSplit(X_test2,y_test,batch_size=4)):
+                X_tst = zip1[0]
+                y_tst = zip1[1]
+                X_tst2 = zip2[0]
+                # -- Testing -- #
+                self.eval()
+
+                pred = self(Variable(X_tst).to(device),Variable(X_tst2).to(device))
+                #Loss is with same input picture after decoding (Reconstruction loss)
+                out = self.loss(pred,Variable(y_tst).to(device))
+
+                if (self.classPrediction):
+                    acc_test += self.calcAccClassPred(pred.data.cpu(),y_tst)
+                else:
+                    acc_test += self.calcRecClassPred(pred.data.cpu(),y_tst)
+                    #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
+
+            acc_test /= X_test.shape[0]
+            loss_train /= X_train.shape[0]
+
+            if (self.classPrediction):
+                if (acc_test > self.curr_max_accuracy):
+                    self.curr_max_accuracy = acc_test
+                    torch.save(self.state_dict(), data_path+"Model_ScanDATA")
+            else:
+                if (acc_test < self.lowest_RMSE):
+                    self.lowest_RMSE = acc_test
+                    torch.save(self.state_dict(), data_path+"Model_ScanDATA")
+            self.epoch_loss.append(loss_train)
+            self.epoch_acc.append(acc_test) 
+
+            # # -- Early stopping -- #
+            if self.early_stopping:
+                if abs(acc_test-old_acc) < threshold:
+                    if max_iter == 30:
+                        e = epochs
+                        break
+                    max_iter +=1
+                else:
+                    max_iter = 1
+                    old_acc = acc_test 
+
+            print(f"\r{e+1}/{epochs}",end='\r')
+            # --- return acc after trainig --- #
+        return self.curr_max_accuracy
+
+
+    def plot(self):
+        plt.figure('Loss and accuracy')
+        plt.plot(self.epoch_loss)
+        plt.plot(self.epoch_acc)
+      
+        plt.legend(["loss","acc"])
+
+        plt.figure('Loss')
+        plt.plot(self.epoch_loss)
+        plt.legend(["loss"])
+        
+        plt.figure('Accuracy')
+        plt.plot(self.epoch_acc)
+        plt.legend(["acc"])
+     
+        plt.show(block=False)
+        input("Press enter to close all windows")
+        plt.close('all')
+
+
 
 class AE(nn.Module):
     """
@@ -368,9 +562,9 @@ class CNN(nn.Module):
         if not torch.is_tensor(x):
             x = Variable(torch.tensor(x)).to(device)
         samples= x.shape[0]
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
+        x =self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
         x = self.pool(x)
         #x = F.relu(self.conv4(x))
         #x = self.pool(x)
@@ -519,14 +713,22 @@ class RNN(nn.Module):
         self.hy = 0
 
 
-        nn.init.xavier_uniform_(self.lstm_x.weight) 
-        nn.init.xavier_uniform_(self.lstm_y.weight) 
+        # nn.init.xavier_uniform_(self.lstm_x.weight) 
+        # nn.init.xavier_uniform_(self.lstm_y.weight) 
 
         #The optimizer
         self.optimizer = optim.Adam(self.parameters(),lr=0.0005)
 
         #Loss        
-        self.loss = nn.MSELoss()
+        self.loss = nn.BCELoss()
+
+    def calcAccClassPred(self,pred,test):
+        count = 0
+        max_ = pred.shape[0]
+        for guess,exp in zip(pred,test):
+            if(torch.round(guess)==exp):
+                count += 1
+        return count
 
     def forward(self,in_,hid_x,hid_y):
         if not torch.is_tensor(in_):
@@ -536,7 +738,7 @@ class RNN(nn.Module):
         out_1, hidx = self.lstm_x(in_[:,:,:512],hid_x)
         out_2, hidy = self.lstm_y(in_[:,:,512:-1],hid_y)
         fin_out = F.relu(self.linear(torch.cat((out_1, out_2), dim=2)))
-        fin_out = F.relu(self.linear_1(fin_out)).reshape(-1,1)
+        fin_out = torch.sigmoid(self.linear_1(fin_out)).reshape(-1,1)
         return fin_out,hidx,hidy
 
     def train(self,X_train,X_test,y_train,y_test,epochs=10):
@@ -558,13 +760,11 @@ class RNN(nn.Module):
             loss_train = 0
             acc_test = 0
 
-            for X_t,y_t,X_tst,y_tst in zip(X_train,y_train,X_test,y_test):
+            for X_t,y_t in  batchSplit(X_train,y_train,batch_size=16):
                 # --- Trainig ----- #
                 #torch.autograd.set_detect_anomaly(True)
-                X_t = X_t.reshape(1,1,-1)
-                y_t = (y_t*100).reshape(1,-1)
-                X_tst=X_tst.reshape(1,1,-1)
-                y_tst = (y_tst*100).reshape(1,-1)
+                y_t = y_t.reshape(-1,1)
+              
 
 
                 hidx = tuple([each.data for each in hidx])
@@ -583,12 +783,17 @@ class RNN(nn.Module):
                 loss_train += out.data.cpu().numpy()
 
             
+            for X_tst,y_tst in batchSplit(X_test,y_test,batch_size=4):
+                y_tst = y_tst.reshape(-1,1)
+                
+
                 # -- Testing -- #
-                pred,_,_ = self(Variable(X_tst).to(device),hidx,hidy)
-                #Loss is with same input picture after decoding (Reconstruction loss)
-                out = self.loss(pred,Variable(y_tst).to(device))
-               # print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
-                acc_test += 100-(abs(pred.data.cpu()-y_tst))
+                pred,_,_ = self(Variable(X_tst).to(device),self.hx,self.hy)
+                acc_test += self.calcAccClassPred(pred.cpu(),y_tst)
+                #print(f"prediction: {pred}, expected: {y_tst}, accuracy: {100-(abs(pred.data.cpu()-y_tst))}")
+
+
+                
                 
                 
                 

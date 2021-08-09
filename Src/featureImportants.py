@@ -12,16 +12,20 @@ def main():
     #y = np.array(df.append(getData(approved_DEA))['DEA'],np.single).reshape(-1,1)
 
     data = normalize(df.append(df_a)[fcnn_data].to_numpy())
+    R = abs(np.corrcoef(data.T))
+    plt.matshow(R)
+    plt.xticks(np.arange(data.shape[1]),fcnn_data,rotation=90)
+    plt.yticks(np.arange(data.shape[1]),fcnn_data)
+
+    plt.colorbar()
+    plt.show()
     X_train,X_test,y_train,y_test= scrampleAndSplitData(data,df,df_a,WithDEA = False)
 
     X_bc = np.append(X_train,X_test,axis=0)
     y_bc = np.append(y_train,y_test,axis=0)
 
 
-    R = abs(np.corrcoef(X_bc.T))
-    plt.matshow(R)
-    plt.colorbar()
-    plt.show()
+   
 
     df = getData(failed_DEA)
     df_a = getData(approved_DEA)
@@ -38,20 +42,20 @@ def main():
     # The regression test with fittin to each functiontest parameter (one at a time)
     
     # The regression test (with the DEA scores)
-    LinearRegressionTest(X_dea,y_dea)
-    print()
-    DecisionTreeRegressorTest(X_dea,y_dea)
-    print()
-    RandomForestRegressorTest(X_dea,y_dea)
-    print()
+    # LinearRegressionTest(X_dea,y_dea)
+    # print()
+    # DecisionTreeRegressorTest(X_dea,y_dea)
+    # print()
+    # RandomForestRegressorTest(X_dea,y_dea)
+    # print()
 
-    # The binary classificationstests
-    LogisticRegressionTest(X_bc,y_bc)
-    print()
-    DecisionTreeClassifierTest(X_bc,y_bc)
-    print()
-    RandomForestClassifierTest(X_bc,y_bc)
-    print()
+    # # The binary classificationstests
+    # LogisticRegressionTest(X_bc,y_bc)
+    # print()
+    # DecisionTreeClassifierTest(X_bc,y_bc)
+    # print()
+    # RandomForestClassifierTest(X_bc,y_bc)
+    # print()
 
 
 def RandomForestClassifierTest(X,y):

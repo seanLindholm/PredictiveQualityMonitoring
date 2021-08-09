@@ -50,8 +50,11 @@ def main(SaveImgData=False):
     lowest_RMSE = 1000
     acc_avg = 0
     for _ in range(tests):
-        X_train,X_test,y_train,y_test= scrampleAndSplitData(df_f,df_a,numpy_data_name="numpyData\\img_data_split_YM")#,out_parameters=[param])
-        net = FCNN(X_train.shape[1],early_stopping=False,class_prediction=classPred).to(device)
+        X_train,X_test,y_train,y_test,_,_= scrampleAndSplitData(df_f,df_a)#,numpy_data_name="numpyData\\img_data_split_YM")#,out_parameters=[param])
+
+
+        
+        net = FCNN(X_train.shape[1],early_stopping=True,class_prediction=classPred).to(device)
 
         hist_loss = np.array([])
         hist_acc = np.array([])
@@ -74,12 +77,12 @@ def main(SaveImgData=False):
         
         hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
         hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
+        net.plot()
 
 
-
-    # for param,i in zip(function_test_col,range(len(function_test_col))): 
-    #     print(f"Acc and lost for {param} - with best accuracy")
-    #     plot(param_hist_loss[i],param_hist_acc[i])
+    #for param,i in zip(function_test_col,range(len(function_test_col))): 
+        #print(f"Acc and lost for {param} - with best accuracy")
+        #plot(param_hist_loss[i],param_hist_acc[i])
 
     
     print(f"After {tests} runs of 200 epochs we get a max accuracy of {max_acc*100} with an average of {(acc_avg/tests)*100}")

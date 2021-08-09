@@ -53,10 +53,12 @@ class productionCostSimulation:
             self.Baseline = True
             self.acc_a = 1
             self.acc_f = 0
+            self.maxRuns = np.inf
         else:
             self.Baseline = False
             self.acc_a = confussion[0]
             self.acc_f = confussion[1]
+            self.maxRuns = np.inf
         self.cost = 0
         self.generatedArrays = 0
         self.array_cost = 65.83
@@ -122,35 +124,34 @@ class productionCostSimulation:
             self.goodEndProducts += sum(r)
 
     def plotAnalytics(self):
-        fig, ax = plt.subplots(2,2)
+      
+
+        fig, ax = plt.subplots(3,1)
         if (self.Baseline):
             fig.suptitle(f"The Baseline without any model to sort after.\nWith the likelihood that any produced array will fail in functiontest being {self.likelihood_bad*100:.2f}%")
         else:
             fig.suptitle(f"predictive accuracy good arrays {self.acc_a*100:.0f}% with predictive accuracy bad arrays {self.acc_f*100:.0f}%\nWith the likelihood that any produced array will fail in functiontest being {self.likelihood_bad*100:.2f}%")
-        ax[0][0].plot(self.unit_cost_hist)
-        ax[0][1].plot(self.accpetedRuns_hist,color='blue',label="Accepted Runs")
-        ax[0][1].plot(self.discardedRuns_hist,color='red',label="Discarded Runs")
+        ax[0].plot(self.unit_cost_hist)
+        ax[1].plot(self.accpetedRuns_hist,color='blue',label="Accepted Runs")
+        ax[1].plot(self.discardedRuns_hist,color='red',label="Discarded Runs")
 
-        ax[1][0].plot(self.goodEndProducts_hist,color='blue',label="Good products")
-        ax[1][0].plot(self.faultyEndProducts_hist,color='red',label="Faulty products")
-        ax[1][1].plot(self.generatedArrays_hist)
+        ax[2].plot(self.goodEndProducts_hist,color='blue',label="Good products")
+        ax[2].plot(self.faultyEndProducts_hist,color='red',label="Faulty products")
 
-        ax[0][0].set_xlabel("weeks")
-        ax[0][0].set_ylabel("The unit cost of an array in production")
+        ax[0].set_xlabel("simulation step")
+        ax[0].set_ylabel("The unit cost of an array in production")
         
-        ax[0][1].set_xlabel("weeks")
-        ax[0][1].set_ylabel("Number of Runs")
-        ax[0][1].legend(loc="lower right")
+        ax[1].set_xlabel("simulation step")
+        ax[1].set_ylabel("Number of Runs")
+        ax[1].legend(loc="best")
 
 
-        ax[1][0].set_xlabel("weeks")
-        ax[1][0].set_ylabel("Number of cartridges")
-        ax[1][0].legend(loc="lower right")
+        ax[2].set_xlabel("simulation step")
+        ax[2].set_ylabel("Number of cartridges")
+        ax[2].legend(loc="best")
 
 
-        ax[1][1].set_xlabel("weeks")
-        ax[1][1].set_ylabel("Number of arrays generated in simulation")
-
+      
         plt.show()
 
     def run(self,min_weeks_sim,plot=True):
@@ -162,7 +163,7 @@ class productionCostSimulation:
         self.generatedArrays_hist = []
         counter=0
         unit_cost_old = -100
-        while (abs(unit_cost_old-self.unit_cost) > 10e-4 or counter <= min_weeks_sim):
+        while ((abs(unit_cost_old-self.unit_cost) > 10e-4 or counter <= min_weeks_sim) and self.maxRuns > counter):
             counter+=1
         #for _ in range(weeks):
             #if not all are improved throw out the run
@@ -202,7 +203,7 @@ def plot_(unit_,faulty_,good_,arrays_,accept_,discard_,names):
     plt.plot(names[1:],base,'g--',label="The baseline")
     plt.title("The unit cost as a function of the model accuracy with baseline") 
     plt.xlabel("Model accuracy")
-    plt.legend(loc="lower right")
+    plt.legend(loc="center right")
     plt.ylabel("The unit cost of an array in production")
     plt.xticks(rotation=90,fontsize=6)
 
@@ -213,10 +214,10 @@ def plot_(unit_,faulty_,good_,arrays_,accept_,discard_,names):
     plt.plot(names[1:],base,'y--',label="The baseline - discarded")
     plt.plot(names[1:],accept_[1:],color='blue',label="Accepted Runs")
     plt.plot(names[1:],discard_[1:],color='red',label="Discarded Runs")
-    plt.title(f"Procentatc of accepted vs discarded runs from the total number of produced run at steady state") 
+    plt.title(f"Percentage of accepted vs discarded runs after function test of the total number of runs produced.") 
     plt.xlabel("Model accuracy")
-    plt.ylabel("Procentace of total number of runs")
-    plt.legend(loc="lower right")
+    plt.ylabel("Percentage of total number of runs")
+    plt.legend(loc="center right")
     plt.xticks(rotation=90,fontsize=6)
 
     plt.figure()
@@ -226,21 +227,21 @@ def plot_(unit_,faulty_,good_,arrays_,accept_,discard_,names):
     plt.plot(names[1:],base,'y--',label="The baseline - faulty")
     plt.plot(names[1:],good_[1:],color='blue',label="Good products")
     plt.plot(names[1:],faulty_[1:],color='red',label="Faulty products")
-    plt.title(f"Procentatc of good vs faulty cartrigdes from the total number of produced unites at steady state") 
+    plt.title(f"Percentage of good vs faulty products from the total number of produced products at steady state.") 
     plt.xlabel("Model accuracy")
-    plt.ylabel("Procentace of total number of cartridges")
-    plt.legend(loc="lower right")
+    plt.ylabel("Percentage of total number of cartridges")
+    plt.legend(loc="center right")
     plt.xticks(rotation=90,fontsize=6)
 
-    plt.figure()
-    base = [arrays_[0] for _ in range(len(unit_[1:]))]
-    plt.plot(names[1:],base,'g--',label="The baseline")
-    plt.plot(names[1:],arrays_[1:])
-    plt.title(f"Number of arrays generated before steady state") 
-    plt.xlabel("Model accuracy")
-    plt.ylabel("number of arrays")
-    plt.legend(loc="lower right")
-    plt.xticks(rotation=90,fontsize=6)
+    # plt.figure()
+    # base = [arrays_[0] for _ in range(len(unit_[1:]))]
+    # plt.plot(names[1:],base,'g--',label="The baseline")
+    # plt.plot(names[1:],arrays_[1:])
+    # plt.title(f"Number of arrays generated before steady state") 
+    # plt.xlabel("Model accuracy")
+    # plt.ylabel("number of arrays")
+    # plt.legend(loc="lower right")
+    # plt.xticks(rotation=90,fontsize=6)
 
 
 def main():
@@ -306,4 +307,8 @@ def main():
 
 
 if __name__ == "__main__":
+    # sim = productionCostSimulation(likelihood_bad(),[.90,.70],None)
+    # sim.run(min_weeks_sim=0,plot=True)
+    # sim = productionCostSimulation(likelihood_bad(),None,None)
+    # sim.run(min_weeks_sim=100,plot=True)
     main()

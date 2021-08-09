@@ -31,31 +31,62 @@ def main(SaveImgData=False):
         print("Done file ym inner circle")
         saveImageData("numpyData\\img_data_innerCircle_CA","inner_crop_CA.jpg",path=path)
         print("Done file ca inner circle")
-        saveImageData("numpyData\\img_data_innerCircle_RAW","inner_crop_RAW.jpg",path=path)
-        print("Done file RAW inner circle")
-
+    
         
         saveImageData("numpyData\\img_data_bothCircles_YM","both_crop_YM.jpg",path=path)
-        print("Done file ym outter circle")
+        print("Done file ym both circle")
         saveImageData("numpyData\\img_data_bothCircles_CA","both_crop_CA.jpg",path=path)
-        print("Done file ca outter circle")
+        print("Done file ca both circle")
         saveImageData("numpyData\\img_data_bothCircles_RAW","both_crop_RAW.jpg",path=path)
+        print("Done file RAW both circle")
+
+        saveImageData("numpyData\\img_data_outterCircles_YM","outter_crop_YM.jpg",path=path)
+        print("Done file ym outter circle")
+        saveImageData("numpyData\\img_data_outterCircles_CA","outter_crop_CA.jpg",path=path)
+        print("Done file ca outter circle")
+        saveImageData("numpyData\\img_data_outterCircles_RAW","outter_crop_RAW.jpg",path=path)
         print("Done file RAW outter circle")
 
 
+        saveImageData("numpyData\\img_data_outterCircles_YM","in_inner_crop_YM_diff_strip.jpg",path=path)
+        print("Done file ym split")
+        saveImageData("numpyData\\img_data_outterCircles_CA","in_inner_crop_CA_diff_strip.jpg",path=path)
+        print("Done file ym split")
+       
+        saveImageData("numpyData\\img_data_innerCircle_YM_diff","inner_crop_YM_diff.jpg",path=path)
+        print("Done file ym inner circle")
+        saveImageData("numpyData\\img_data_innerCircle_CA_diff","inner_crop_CA_diff.jpg",path=path)
+        print("Done file ca inner circle")
+        saveImageData("numpyData\\img_data_innerCircle_RAW_diff","inner_crop_RAW_diff.jpg",path=path)
+        print("Done file RAW inner circle")
 
-    saveImageData("numpyData\\img_data_split_YM","in_inner_crop_YM_diff_strip.jpg",path=path)
-    print("Done file YM in_inner circle")
+        
+        saveImageData("numpyData\\img_data_bothCircles_YM_diff","both_crop_YM_diff.jpg",path=path)
+        print("Done file ym both circle")
+        saveImageData("numpyData\\img_data_bothCircles_CA_diff","both_crop_CA_diff.jpg",path=path)
+        print("Done file ca both circle")
+        saveImageData("numpyData\\img_data_bothCircles_RAW_diff","both_crop_RAW_diff.jpg",path=path)
+        print("Done file RAW both circle")
 
+        saveImageData("numpyData\\img_data_outterCircles_YM_diff","outter_crop_YM_diff.jpg",path=path)
+        print("Done file ym outter circle")
+        saveImageData("numpyData\\img_data_outterCircles_CA_diff","outter_crop_CA_diff.jpg",path=path)
+        print("Done file ca outter circle")
+        saveImageData("numpyData\\img_data_outterCircles_RAW_diff","outter_crop_RAW_diff.jpg",path=path)
+        print("Done file RAW outter circle")
 
-    df = getData(failed_DEA)
-    df_a = getData(approved_DEA)
-    X_train,X_test,y_train,y_test= scrampleAndSplitData(df,df_a,ImageData=True,numpy_data_name="numpyData\\img_data_split_YM")#,out_parameters=["40/25 mM glu/lac høj O2"])
-    
+    img_data = "numpyData\\img_plot"
 
+    saveImageData(img_data,"outter_crop_YM_diff.jpg",path=path)
+    print("Done file " + img_data)
+ 
 
-    big_picture = False
-    split = True
+    df = getData(failed_NoNaN)
+    df_a = getData(approved_NoNaN)
+    X_train,X_test,y_train,y_test,_,_= scrampleAndSplitData(df,df_a,ImageData=True,plusMore=True,numpy_data_name=img_data)#,out_parameters=["40/25 mM glu/lac høj O2"])
+
+    big_picture = True
+    split = False
     net = CNN(1,big_picture=big_picture,classPrediction=True,early_stopping=False,split=split).to(device)
     torch.save(net.state_dict(), data_path+"YM_in_inner")
 
@@ -63,7 +94,7 @@ def main(SaveImgData=False):
     hist_acc = np.array([])
 
     
-    net.train_(X_train,X_test,y_train,y_test,epochs=1000)
+    net.train_(X_train,X_test,y_train,y_test,epochs=250)
     hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
     hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
     

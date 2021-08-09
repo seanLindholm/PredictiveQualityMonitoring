@@ -1,6 +1,8 @@
 from constants_ import *
 from sklearn.cluster import KMeans as km
 from Helper import prettyprint
+import seaborn as sns
+
 
 def clusterInformation(label,class_,max_f,max_a,clusters):
     class_[class_ == 'Approved'] = 1
@@ -29,26 +31,27 @@ def main(num_clusters=2):
     clusters = km(n_clusters=num_clusters, random_state=None).fit(dt_mixed)
     cluster_label = np.transpose(np.array([clusters.labels_]))
 
+   
     clusterInformation(cluster_label.squeeze(),dt_mixed_class.squeeze(),max_failed,max_approved,num_clusters)
-    print(f"cluster centers for {num_clusters} clusters")
-    prettyprint.print_matrix(clusters.cluster_centers_)
-    print()
-    pictures_ = loadImageData("numpyData\\img_data_split_YM").reshape(loadImageData("numpyData\\img_data_split_YM").shape[0],-1)
-    print("Clustering with the features from the prerimiter of the sensor\n")
-    data = normalize(np.append(df.append(df_)[fcnn_data].to_numpy(),pictures_,axis=1))
-    clusters = km(n_clusters=num_clusters, random_state=None).fit(data)
-    cluster_label = np.transpose(np.array([clusters.labels_]))
-    clusterInformation(cluster_label.squeeze(),dt_mixed_class.squeeze(),max_failed,max_approved,num_clusters)
-    print()
-    print("Clustering the image features by themself\n")
-    data = normalize(pictures_)
-    clusters = km(n_clusters=num_clusters, random_state=None).fit(data)
-    cluster_label = np.transpose(np.array([clusters.labels_]))
-    clusterInformation(cluster_label.squeeze(),dt_mixed_class.squeeze(),max_failed,max_approved,num_clusters)
+    # print(f"cluster centers for {num_clusters} clusters")
+    # prettyprint.print_matrix(clusters.cluster_centers_)
+    # print()
+    # pictures_ = loadImageData("numpyData\\img_data_split_YM").reshape(loadImageData("numpyData\\img_data_split_YM").shape[0],-1)
+    # print("Clustering with the features from the prerimiter of the sensor\n")
+    # data = normalize(np.append(df.append(df_)[fcnn_data].to_numpy(),pictures_,axis=1))
+    # clusters = km(n_clusters=num_clusters, random_state=None).fit(data)
+    # cluster_label = np.transpose(np.array([clusters.labels_]))
+    # clusterInformation(cluster_label.squeeze(),dt_mixed_class.squeeze(),max_failed,max_approved,num_clusters)
+    # print()
+    # print("Clustering the image features by themself\n")
+    # data = normalize(pictures_)
+    # clusters = km(n_clusters=num_clusters, random_state=None).fit(data)
+    # cluster_label = np.transpose(np.array([clusters.labels_]))
+    # clusterInformation(cluster_label.squeeze(),dt_mixed_class.squeeze(),max_failed,max_approved,num_clusters)
 
 
 if __name__ == "__main__":
-    for clusters in range (2,9):
+    for clusters in range (8,9):
         main(clusters)
         print("-----------------------------------------------------------------------------")
 

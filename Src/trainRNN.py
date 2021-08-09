@@ -38,16 +38,22 @@ def main(SaveImgData=False):
 
 #   data = loadImageData("numpyData\\img_data_innerCircle_YM")
 #    data = loadImageData("numpyData\\img_data_bothCircles_CA")
-    data = loadImageData("numpyData\\img_data_bothCircles_YM")
+    img_data = "numpyData\\img_data_bothCircles_CA"
+    #data = loadImageData("numpyData\\img_data_bothCircles_RAW")
+    saveImageData(img_data,"both_crop_RAW.jpg",path=path)
 
     net = RNN().to(device)
     torch.save(net.state_dict(), path+"LSTM_YM")
-    split = int(data.shape[0]*0.8)
-    data_indx = np.random.permutation(data.shape[0])
-    X_train_img = data[data_indx[:split]][:]
-    X_test_img = data[data_indx[split:]][:]
-    y_train = y[data_indx[:split]][:]
-    y_test = y[data_indx[split:]][:]
+    # split = int(data.shape[0]*0.8)
+    # data_indx = np.random.permutation(data.shape[0])
+    # X_train_img = data[data_indx[:split]][:]
+    # X_test_img = data[data_indx[split:]][:]
+    # y_train = y[data_indx[:split]][:]
+    # y_test = y[data_indx[split:]][:]
+    df = getData(failed_NoNaN)
+    df_a = getData(approved_NoNaN)
+    X_train_img,X_test_img,y_train,y_test,_,_= scrampleAndSplitData(df,df_a,ImageData=True,numpy_data_name=img_data)#,out_parameters=["40/25 mM glu/lac høj O2"])
+    
 
     #Convert the pictures into mid sections
     conv = []
@@ -70,7 +76,7 @@ def main(SaveImgData=False):
     tail_test = 0; test_start = test_step
 
     
-    net.train(X_train,X_test,y_train,y_test,epochs=1000)
+    net.train(X_train,X_test,y_train,y_test,epochs=250)
     hist_loss = np.append(hist_loss,net.epoch_loss,axis=0)
     hist_acc = np.append(hist_acc,net.epoch_acc,axis=0)
     tail_train+=train_step;train_start+=train_step
@@ -81,7 +87,7 @@ def main(SaveImgData=False):
 
     
 
-    for ind in np.random.permutation(X_test_img.shape[0])[:5]:
+    for ind in np.random.permutation(X_test_img.shape[0])[:10]:
         dea,_,_=net.forward(X_test[ind].reshape(1,1,-1),net.hx,net.hy)
         img = X_test_img[ind].reshape(1,1,482,512)
         img = img[0][0]*255

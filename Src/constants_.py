@@ -39,6 +39,7 @@ function_test_col = ["Tid efter start [timer]","2/1 mM Glu/Lac [mM]","1 mM H2O2 
 
 #fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_void_cav","CA_cav_depth","Ca_void_mem","CA_overlap_min","CA_overlap_max","YM_void_mem"]
 fcnn_data = ["time_betw_scan_min","CA","CA Humidity","CA Temperature","YM","YM Humidity","YM Temperature","CA_cav_dia","CA_cav_depth","CA_overlap_min","CA_overlap_max"]
+#fcnn_data = ["CA Humidity","CA Temperature","YM Humidity","YM Temperature"]
 
 def saveDF(df,name):
     df.to_csv(name,index=False)
@@ -152,23 +153,32 @@ def plot(loss,acc):
         plt.close('all')
 
 
-def scrampleAndSplitData(df,df_a,ImageData=False,numpy_data_name="",WithDEA = False,out_parameters = []):
+def scrampleAndSplitData(df,df_a,ImageData=False,plusMore = False,numpy_data_name="",WithDEA = False,out_parameters = []):
+    data2 = None
+    X_train2 = None
+    X_test2 = None
+
     if WithDEA:
         out_parameters = []
     elif out_parameters != []:
         WithDEA = False
-    if ImageData:
+    if ImageData and not plusMore:
         data = loadImageData(numpy_data_name)
     else:
         if(numpy_data_name != ""):
-            pictures_ = loadImageData(numpy_data_name).reshape(loadImageData(numpy_data_name).shape[0],-1)
-            print(pictures_.shape)
-        data = normalize(np.append(df.append(df_a)[fcnn_data].to_numpy(),pictures_,axis=1))
+            data = loadImageData(numpy_data_name)
+            print(data.shape)
+            data2 =  normalize(df.append(df_a)[fcnn_data].to_numpy())
+            print(data2.shape)
+        else:
+            data = normalize(df.append(df_a)[fcnn_data].to_numpy())
+        
     #80 % train 20% test
     split = int(df.shape[0]*0.8)
     #random indecies
     f_data_indx = np.random.permutation(df.shape[0])
 
+ 
     #50/50 failed and approved
     data_f = data[:df.shape[0],:][f_data_indx]
     if (WithDEA):
@@ -187,11 +197,14 @@ def scrampleAndSplitData(df,df_a,ImageData=False,numpy_data_name="",WithDEA = Fa
     else:
         y_a = np.ones(df.shape[0]).reshape(-1,1)
 
+   
+        
     #Build data train and test
     X_train = np.append(data_f[:split,:],data_a[:split,:],axis=0)
     X_test = np.append(data_f[split:,:],data_a[split:,:],axis=0)
     y_train = np.append(y_f[:split,:],y_a[:split,:],axis=0)
     y_test = np.append(y_f[split:,:],y_a[split:,:],axis=0)
+
 
     #Shuffle test and train
     train_shuffle = np.random.permutation(X_train.shape[0])
@@ -201,4 +214,14 @@ def scrampleAndSplitData(df,df_a,ImageData=False,numpy_data_name="",WithDEA = Fa
     y_train = y_train[train_shuffle].astype('float32') 
     y_test = y_test[test_shuffle].astype('float32') 
 
-    return X_train,X_test,y_train,y_test
+    if data2 is not None:
+        data_f_2 = data2[:df.shape[0],:][f_data_indx]
+        a_data_indx = np.random.permutation(df_a.shape[0])[:df.shape[0]]
+        data_a_2 = (data2[df.shape[0]:,:])[a_data_indx]
+        
+        X_train2 = np.append(data_f_2[:split,:],data_a_2[:split,:],axis=0)
+        X_test2 = np.append(data_f_2[split:,:],data_a_2[split:,:],axis=0)
+        X_train2 = X_train2[train_shuffle].astype('float32') 
+        X_test2 = X_test2[test_shuffle].astype('float32')
+        
+    return X_train,X_test,y_train,y_test,X_train2,X_test2
